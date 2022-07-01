@@ -150,8 +150,8 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                     visited.add(path)
 
         # Override arguments
-        for arg, value in self.overridden.items():
-            super().__setattr__(arg, value)
+        # for arg, value in self.overridden.items():
+        #     super().__setattr__(arg, value)
 
     @property
     def hoarding(self):
@@ -276,9 +276,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         Variables stall remain overridden even config is reloaded from yaml file.
         Note that this method is irreversible.
         """
-        for arg, value in kwargs.items():
-            self.overridden[arg] = value
-            super().__setattr__(arg, value)
+        pass
+        # for arg, value in kwargs.items():
+        #     self.overridden[arg] = value
+        #     super().__setattr__(arg, value)
 
     def set_record(self, **kwargs):
         """
