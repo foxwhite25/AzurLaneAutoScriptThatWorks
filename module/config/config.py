@@ -257,14 +257,6 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                     logger.warning(f'NextRun of task {task} is too far, reset to now')
                     deep_set(self.data, keys=f'{task}.Scheduler.NextRun', value=now)
 
-        def force_enable(tasks):
-            for task in tasks:
-                enable = deep_get(self.data, keys=f'{task}.Scheduler.Enable', default=None)
-                if enable is not None and not enable:
-                    logger.warning(f'Task {task} is force to enable')
-                    self.modified[f'{task}.Scheduler.Enable'] = True
-
-        force_enable(['Commission', 'Research', 'Reward'])
         limit_next_run(['Commission', 'Reward'], limit=now + timedelta(hours=12, seconds=-1))
         limit_next_run(['Research'], limit=now + timedelta(hours=24, seconds=-1))
         limit_next_run(['OpsiExplore'], limit=now + timedelta(days=31, seconds=-1))
