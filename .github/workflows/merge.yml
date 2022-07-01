@@ -1,0 +1,15 @@
+name: Merge upstream branches
+on:
+  schedule:
+    - cron:  '0 * * * *'
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync and merge upstream repository with your current repository
+        uses: dabreadman/sync-upstream-repo@v1.0.0.b
+        with:
+          upstream_repo: "https://github.com/LmeSzinc/AzurLaneAutoScript"
+          upstream_branch: master
+          downstream_branch: master
+          token: ${{ secrets.GITHUB_TOKEN }}
