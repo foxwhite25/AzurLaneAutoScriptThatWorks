@@ -3,13 +3,17 @@ on:
   schedule:
     - cron:  '0 * * * *'
 jobs:
-  merge:
+  merge-upstream:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync and merge upstream repository with your current repository
-        uses: dabreadman/sync-upstream-repo@v1.0.0.b
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
-          upstream_repo: "https://github.com/LmeSzinc/AzurLaneAutoScript"
-          upstream_branch: master
-          downstream_branch: master
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: master             # set the branch to merge to
+          fetch-depth: 0
+      - name: Merge Upstream
+        uses: exions/merge-upstream@v1
+        with:
+          upstream: LmeSzinc/AzurLaneAutoScript      # set the upstream repo
+          upstream-branch: master   # set the upstream branch to merge from
+          branch: master          # set the branch to merge to
