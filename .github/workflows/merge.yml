@@ -15,5 +15,5 @@ jobs:
         uses: exions/merge-upstream@v1
         with:
           upstream: LmeSzinc/AzurLaneAutoScript      # set the upstream repo
-          upstream-branch: LmeSzinc:master   # set the upstream branch to merge from
+          upstream-branch: master   # set the upstream branch to merge from
           branch: master          # set the branch to merge to
