@@ -4158,7 +4158,7 @@
   "Commission": {
     "Scheduler": {
       "Enable": {
-        "type": "lock",
+        "type": "checkbox",
         "value": true
       },
       "NextRun": {
@@ -4254,7 +4254,7 @@
   "Research": {
     "Scheduler": {
       "Enable": {
-        "type": "lock",
+        "type": "checkbox",
         "value": true
       },
       "NextRun": {
@@ -4516,7 +4516,7 @@
   "Reward": {
     "Scheduler": {
       "Enable": {
-        "type": "lock",
+        "type": "checkbox",
         "value": true
       },
       "NextRun": {
