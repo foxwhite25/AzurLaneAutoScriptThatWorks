@@ -154,8 +154,8 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                     visited.add(path)
 
         # Override arguments
-        for arg, value in self.overridden.items():
-            super().__setattr__(arg, value)
+        # for arg, value in self.overridden.items():
+        #     super().__setattr__(arg, value)
 
     @property
     def hoarding(self):
