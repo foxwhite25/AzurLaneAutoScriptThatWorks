@@ -83,9 +83,15 @@ class Fleet(Camera, AmbushHandler):
         if not self.config.MAP_HAS_FLEET_STEP:
             return 0
         if self.fleet_current_index == 2:
-            return self.config.Fleet_Fleet2Step
+            if self.fleets_reversed:
+                return self.config.Fleet_Fleet1Step
+            else:
+                return self.config.Fleet_Fleet2Step
         else:
-            return self.config.Fleet_Fleet1Step
+            if self.fleets_reversed:
+                return self.config.Fleet_Fleet2Step
+            else:
+                return self.config.Fleet_Fleet1Step
 
     def fleet_ensure(self, index):
         if self.fleet_set(index=index):
@@ -1149,8 +1155,8 @@ class Fleet(Camera, AmbushHandler):
         """
         if not (self.is_call_submarine_at_boss and self.map.select(is_submarine_spawn_point=True)):
             return False
-        if self.config.Submarine_DistanceToBoss == 'use_U522_skill':
-            logger.info('Going to use U522 skill, skip moving submarines')
+        if self.config.Submarine_DistanceToBoss == 'use_open_ocean_support':
+            logger.info('Going to use Open Ocean Support, skip moving submarines')
             return False
 
         boss = location_ensure(boss)
