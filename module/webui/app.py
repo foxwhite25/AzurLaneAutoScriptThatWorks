@@ -224,17 +224,8 @@ class AlasGUI(Frame):
             put_html('<hr class="hr-group">')
 
             for arg, arg_dict in deep_iter(arg_dict, depth=1):
-                output_kwargs: T_Output_Kwargs = {}
-
-                # Skip hide
-                display: Optional[str] = arg_dict.get("display")
-                if display == "hide":
-                    continue
-                # Disable
-                elif display == "disabled":
-                    output_kwargs["disabled"] = True
                 # Output type
-                output_kwargs["widget_type"] = arg_dict["type"]
+                output_kwargs: T_Output_Kwargs = {"widget_type": arg_dict["type"]}
 
                 arg_name = arg[0]  # [arg_name,]
                 # Internal pin widget name
