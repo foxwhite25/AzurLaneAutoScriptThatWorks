@@ -175,12 +175,10 @@ class ConfigGenerator:
             if not check_override(p, v):
                 continue
             if isinstance(v, dict):
-                deep_default(v, keys='display', value='hide')
                 for arg_k, arg_v in v.items():
                     deep_set(data, keys=p + [arg_k], value=arg_v)
             else:
                 deep_set(data, keys=p + ['value'], value=v)
-                deep_set(data, keys=p + ['display'], value='hide')
         # Set command
         for task in self.task.keys():
             if deep_get(data, keys=f'{task}.Scheduler.Command'):
