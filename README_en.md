@@ -34,7 +34,7 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 - **Mood Control**: Calculates mood consumption, keep exp bonus or prevent red faces.
 - **Event Exploring**: Able to run without clear mode, also handles fleet moving limits and other event mechanism.
 - **Seamless Reward**: Calculates the finish time of research, commission, etc. Receive reward and dispatch again when time reached.
-- **Operation Siren**: Receive Opsi dailies, purchase port shops, do Opsi dailies, do meowfficer farming, purchase Akashi's shop, clear obscured zones every 30 min, clear abyssal and strongholds. ~~What the ... is the strategic search, like sh*t, compares to Alas.~~
+- **Operation Siren**: Receive Opsi dailies, purchase port shops, do Opsi dailies, do meowfficer farming, purchase Akashi's shop, clear obscured zones every 27 min, clear abyssal and strongholds. ~~What the ... is the strategic search, like sh*t, compares to Alas.~~
 - **Opsi Explore**: After Opsi monthly reset, re-explore all zones without special radar (5000 oil item)
 
 
@@ -92,7 +92,7 @@ Development documents, refer to [WIKI](https://github.com/LmeSzinc/AzurLaneAutoS
 
 ## Join Development
 
-We will occasionally publish future work on [Issues](https://github.com/LmeSzinc/AzurLaneAutoScript/issues) and mark it as `help wanted`, feel free to submit [Pull Requests](https://github.com.com/LmeSzinc/AzurLaneAutoScript/pulls) to Alas, we will read every line of your code.
+Alas is still in active development, we will occasionally publish future work on [Issues](https://github.com/LmeSzinc/AzurLaneAutoScript/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) and mark it as `help wanted`, feel free to submit [Pull Requests](https://github.com.com/LmeSzinc/AzurLaneAutoScript/pulls) to Alas, we will read every line of your code.
 
 Oh yeah, don't forget to read the [development documentation](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/1.-Start).
 
@@ -105,4 +105,5 @@ Oh yeah, don't forget to read the [development documentation](https://github.com
 - [ALAuto](https://github.com/Egoistically/ALAuto), Another Azur Lane bot for EN, not maintaining anymore. Alas imitated its structure.
 - [ALAuto homg_trans_beta](https://github.com/asd111333/ALAuto/tree/homg_trans_beta), Alas introduced its homography transition into map detection.
 - [PyWebIO](https://github.com/pywebio/PyWebIO), GUI framework that Alas uses.
+- [MaaAssistantArknights](https://github.com/MaaAssistantArknights/MaaAssistantArknights), an Arknights assistant based on image recognition, helps you to complete daily quests efficiently! -> [MAA submodule tutorial](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/submodule_maa_cn)
 

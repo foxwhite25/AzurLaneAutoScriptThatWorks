@@ -72,11 +72,11 @@ class ConnectionAttr:
                     self.config.Emulator_ScreenshotMethod = 'uiautomator2'
                     self.config.Emulator_ControlMethod = 'uiautomator2'
         if self.is_over_http:
-            if self.config.Emulator_ScreenshotMethod not in ["ADB", "uiautomator2"] \
+            if self.config.Emulator_ScreenshotMethod not in ["ADB", "uiautomator2", "aScreenCap"] \
                     or self.config.Emulator_ControlMethod not in ["ADB", "uiautomator2", "minitouch"]:
                 logger.warning(
                     f'When connecting to a device over http: {self.serial} '
-                    f'ScreenshotMethod can only use ["ADB", "uiautomator2"], '
+                    f'ScreenshotMethod can only use ["ADB", "uiautomator2", "aScreenCap"], '
                     f'ControlMethod can only use ["ADB", "uiautomator2", "minitouch"]'
                 )
                 raise RequestHumanTakeover
@@ -130,9 +130,16 @@ class ConnectionAttr:
         else:
             folder_name = f"Android_{serial[19:]}"
 
-        with OpenKey(HKEY_LOCAL_MACHINE,
-                     rf"SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config") as key:
-            port = QueryValueEx(key, "BstAdbPort")[0]
+        try:
+            with OpenKey(HKEY_LOCAL_MACHINE,
+                         rf"SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config") as key:
+                port = QueryValueEx(key, "BstAdbPort")[0]
+        except FileNotFoundError:
+            logger.error(rf'Unable to find registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config')
+            logger.error('Please confirm that your are using BlueStack 4 hyper-v and not regular BlueStacks 4')
+            logger.error(r'Please check if there is any other emulator instances under '
+                         r'registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests')
+            raise RequestHumanTakeover
         logger.info(f"New adb port: {port}")
         return f"127.0.0.1:{port}"
 
@@ -157,8 +164,18 @@ class ConnectionAttr:
         else:
             parameter_name = rf"bst\.instance\.Nougat64_{serial[19:]}\.status.adb_port"
 
-        with OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt") as key:
-            directory = QueryValueEx(key, 'UserDefinedDir')[0]
+        try:
+            with OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt") as key:
+                directory = QueryValueEx(key, 'UserDefinedDir')[0]
+        except FileNotFoundError:
+            try:
+                with OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt_cn") as key:
+                    directory = QueryValueEx(key, 'UserDefinedDir')[0]
+            except FileNotFoundError:
+                logger.error('Unable to find registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt '
+                             'or HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt_cn')
+                logger.error('Please confirm that you are using BlueStacks 5 hyper-v and not regular BlueStacks 5')
+                raise RequestHumanTakeover
         logger.info(f"Configuration file directory: {directory}")
 
         with open(os.path.join(directory, 'bluestacks.conf'), encoding='utf-8') as f:

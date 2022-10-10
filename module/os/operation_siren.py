@@ -1,9 +1,9 @@
 import numpy as np
 
-from module.config.utils import (deep_get, get_os_next_reset,
+from module.config.utils import (get_os_next_reset,
                                  get_os_reset_remain,
                                  DEFAULT_TIME)
-from module.exception import RequestHumanTakeover, ScriptError
+from module.exception import RequestHumanTakeover, GameStuckError, ScriptError
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.os.fleet import BossFleet
@@ -179,21 +179,21 @@ class OperationSiren(OSMap):
         Delay other OpSi tasks during os_explore
         """
         logger.info('Delay other OpSi tasks during OpsiExplore')
-        next_run = self.config.Scheduler_NextRun
-        for task in ['OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold', 'OpsiMeowfficerFarming']:
-            keys = f'{task}.Scheduler.NextRun'
-            current = deep_get(self.config.data, keys=keys, default=DEFAULT_TIME)
-            if current < next_run:
-                logger.info(f'Delay task `{task}` to {next_run}')
-                self.config.modified[keys] = next_run
+        with self.config.multi_set():
+            next_run = self.config.Scheduler_NextRun
+            for task in ['OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold', 'OpsiMeowfficerFarming']:
+                keys = f'{task}.Scheduler.NextRun'
+                current = self.config.cross_get(keys=keys, default=DEFAULT_TIME)
+                if current < next_run:
+                    logger.info(f'Delay task `{task}` to {next_run}')
+                    self.config.cross_set(keys=keys, value=next_run)
 
-        # ResetActionPointPreserve
-        # Unbound attribute, default to 500
-        preserve = self.config.OpsiMeowfficerFarming_ActionPointPreserve
-        logger.info(f'Set OpsiMeowfficerFarming.ActionPointPreserve to {preserve}')
-        self.config.modified['OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve'] = preserve
-
-        self.config.update()
+            # ResetActionPointPreserve
+            # Unbound attribute, default to 500
+            preserve = self.config.OpsiMeowfficerFarming_ActionPointPreserve
+            logger.info(f'Set OpsiMeowfficerFarming.ActionPointPreserve to {preserve}')
+            self.config.cross_set(
+                keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve', value=preserve)
 
     def _os_explore(self):
         """
@@ -208,6 +208,8 @@ class OperationSiren(OSMap):
             with self.config.multi_set():
                 self.config.OpsiExplore_LastZone = 0
                 self.config.task_delay(target=next_reset)
+                self.config.task_call('OpsiDaily', force_call=False)
+                self.config.task_call('OpsiShop', force_call=False)
             self.config.task_stop()
 
         logger.hr('OS explore', level=1)
@@ -264,7 +266,7 @@ class OperationSiren(OSMap):
                 self.globe_goto(0)
 
         logger.critical('Failed to solve the locked zone')
-        raise RequestHumanTakeover
+        raise GameStuckError
 
     def clear_obscure(self):
         """

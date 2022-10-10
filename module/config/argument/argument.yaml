@@ -225,6 +225,7 @@ GemsFarming:
   CommonCV:
     value: any
     option: [any, langley, bogue, ranger, hermes]
+  CommissionLimit: true
 
 # ==================== Event ====================
 
@@ -277,6 +278,9 @@ Tactical:
     > BlueT4 > YellowT4 > RedT4
     > BlueT1 > YellowT1 > RedT1
     > first
+  RapidTrainingSlot:
+    value: do_not_use
+    option: [do_not_use, slot_1, slot_2, slot_3, slot_4]
 ControlExpOverflow:
   Enable: true
   T4Allow: 100
@@ -530,8 +534,11 @@ OpsiGeneral:
     ActionPoint > PurpleCoins
 OpsiAshBeacon:
   AshAttack: true
-  EnsureFullyCollected: true
+  OneHitMode: true
   RequestAssist: true
+  EnsureFullyCollected: true
+OpsiDossierBeacon:
+  Enable: true
 OpsiFleetFilter:
   Filter: |-
     Fleet-4 > CallSubmarine > Fleet-2 > Fleet-3 > Fleet-1
