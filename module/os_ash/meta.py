@@ -3,6 +3,7 @@ from enum import Enum
 import module.config.server as server
 from module.combat.combat import BATTLE_PREPARATION
 from module.logger import logger
+from module.meta_reward.meta_reward import MetaReward
 from module.ocr.ocr import DigitCounter, Digit
 from module.os_ash.ash import AshCombat
 from module.os_ash.assets import *
@@ -124,6 +125,10 @@ class OpsiAshBeacon(Meta):
             if self.appear(BATTLE_PREPARATION, offset=(30, 30), interval=2):
                 logger.info('Wrong click into battle preparation page')
                 self.device.click(BACK_ARROW)
+                return False
+            if self.appear(HELP_CONFIRM, offset=(30, 30), interval=3):
+                logger.info('Wrong click into HELP_CONFIRM')
+                self.device.click(HELP_ENTER)
                 return False
             if self._in_meta_page():
                 logger.info('Meta combat finished and in correct page.')
@@ -405,7 +410,7 @@ class OpsiAshBeacon(Meta):
 
         with self.config.multi_set():
             if self._meta_receive_count > 0:
-                self.config.task_call('MetaReward', force_call=False)
+                MetaReward(self.config, self.device).run()
             self.config.task_delay(server_update=True)
 
 
@@ -522,4 +527,5 @@ class AshBeaconAssist(Meta):
     def run(self):
         self.ui_ensure(page_reward)
         self._begin_meta_assist()
+        MetaReward(self.config, self.device).run()
         self.config.task_delay(server_update=True)
