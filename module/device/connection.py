@@ -284,6 +284,7 @@ class Connection(ConnectionAttr):
                     f'client can send data to {host_port[2]}:{host_port[3]}')
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(host_port[:2])
+        server.settimeout(5)
         server.listen(5)
         return server
 
@@ -458,30 +459,47 @@ class Connection(ConnectionAttr):
         Returns:
             bool: If success
         """
+        # Skip for emulator-5554
         if 'emulator' in serial:
             return True
-        else:
-            for _ in range(3):
-                msg = self.adb_client.connect(serial)
+
+        # Disconnect offline device before connecting
+        device = self.list_device().select(serial=serial).first_or_none()
+        if device:
+            if device.status == 'offline':
+                logger.warning(f'Device {serial} is offline, disconnect it before connecting')
+                self.adb_disconnect(serial)
+            elif device.status == 'unauthorized':
+                logger.error(f'Device {serial} is unauthorized, please accept ADB debugging on your device')
+            elif device.status == 'device':
+                pass
+            else:
+                logger.error(f'Device {serial} is is having a unknown status: {device.status}')
+
+        # Try to connect
+        for _ in range(3):
+            msg = self.adb_client.connect(serial)
+            logger.info(msg)
+            if 'connected' in msg:
+                # Connected to 127.0.0.1:59865
+                # Already connected to 127.0.0.1:59865
+                return True
+            elif 'bad port' in msg:
+                # bad port number '598265' in '127.0.0.1:598265'
+                logger.error(msg)
+                possible_reasons('Serial incorrect, might be a typo')
+                raise RequestHumanTakeover
+            elif '(10061)' in msg:
+                # cannot connect to 127.0.0.1:55555:
+                # No connection could be made because the target machine actively refused it. (10061)
                 logger.info(msg)
-                if 'connected' in msg:
-                    # Connected to 127.0.0.1:59865
-                    # Already connected to 127.0.0.1:59865
-                    return True
-                elif 'bad port' in msg:
-                    # bad port number '598265' in '127.0.0.1:598265'
-                    logger.error(msg)
-                    possible_reasons('Serial incorrect, might be a typo')
-                    raise RequestHumanTakeover
-                elif '(10061)' in msg:
-                    # cannot connect to 127.0.0.1:55555:
-                    # No connection could be made because the target machine actively refused it. (10061)
-                    logger.info(msg)
-                    logger.warning('No such device exists, please restart the emulator or set a correct serial')
-                    raise EmulatorNotRunningError
-            logger.warning(f'Failed to connect {serial} after 3 trial, assume connected')
-            self.detect_device()
-            return False
+                logger.warning('No such device exists, please restart the emulator or set a correct serial')
+                raise EmulatorNotRunningError
+
+        # Failed to connect
+        logger.warning(f'Failed to connect {serial} after 3 trial, assume connected')
+        self.detect_device()
+        return False
 
     @Config.when(DEVICE_OVER_HTTP=True)
     def adb_connect(self, serial):
@@ -494,6 +512,7 @@ class Connection(ConnectionAttr):
             logger.info(msg)
 
         del_cached_property(self, 'hermit_session')
+        del_cached_property(self, 'droidcast_session')
         del_cached_property(self, 'minitouch_builder')
         del_cached_property(self, 'reverse_server')
 
@@ -538,7 +557,11 @@ class Connection(ConnectionAttr):
         logger.info('Install uiautomator2')
         init = u2.init.Initer(self.adb, loglevel=logging.DEBUG)
         init.set_atx_agent_addr('127.0.0.1:7912')
-        init.install()
+        try:
+            init.install()
+        except ConnectionError:
+            u2.init.GITHUB_BASEURL = 'http://tool.appetizer.io/openatx'
+            init.install()
         self.uninstall_minicap()
 
     def uninstall_minicap(self):

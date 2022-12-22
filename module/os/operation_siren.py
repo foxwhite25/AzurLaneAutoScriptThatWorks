@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from module.config.utils import (get_os_next_reset,
+from module.config.utils import (get_nearest_weekday_date,
+                                 get_os_next_reset,
                                  get_os_reset_remain,
                                  DEFAULT_TIME)
 from module.exception import RequestHumanTakeover, GameStuckError, ScriptError
@@ -11,6 +12,8 @@ from module.map.map_grids import SelectedGrids
 from module.os.fleet import BossFleet
 from module.os.globe_operation import OSExploreError
 from module.os.map import OSMap
+from module.os_handler.assets import EXCHANGE_CHECK, EXCHANGE_ENTER
+from module.shop.shop_voucher import VoucherShop
 
 
 class OperationSiren(OSMap):
@@ -67,10 +70,14 @@ class OperationSiren(OSMap):
             self.run_auto_search()
             self.handle_after_auto_search()
 
-    def os_finish_daily_mission(self):
+    def os_finish_daily_mission(self, question=True, rescan=None):
         """
         Finish all daily mission in Operation Siren.
         Suggest to run os_port_daily to accept missions first.
+
+        Args:
+            question (bool): refer to run_auto_search
+            rescan (None, bool): refer to run_auto_search
 
         Returns:
             bool: True if all finished.
@@ -91,7 +98,7 @@ class OperationSiren(OSMap):
             self.os_order_execute(
                 recon_scan=False,
                 submarine_call=self.config.OpsiFleet_Submarine and result != 'pinned_at_archive_zone')
-            self.run_auto_search()
+            self.run_auto_search(question, rescan)
             self.handle_after_auto_search()
             self.config.check_task_switch()
 
@@ -245,20 +252,56 @@ class OperationSiren(OSMap):
         self.os_port_daily(mission=False, supply=self.config.OpsiShop_BuySupply)
         self.config.task_delay(server_update=True)
 
+    def _os_voucher_enter(self):
+        self.os_map_goto_globe(unpin=False)
+        self.ui_click(click_button=EXCHANGE_ENTER, check_button=EXCHANGE_CHECK,
+                      offset=(200, 20), retry_wait=3, skip_first_screenshot=True)
+
+    def _os_voucher_exit(self):
+        self.ui_back(check_button=EXCHANGE_ENTER, appear_button=EXCHANGE_CHECK,
+                     offset=(200, 20), retry_wait=3, skip_first_screenshot=True)
+        self.os_globe_goto_map()
+
+    def os_voucher(self):
+        logger.hr('OS voucher', level=1)
+        self._os_voucher_enter()
+        VoucherShop(self.config, self.device).run()
+        self._os_voucher_exit()
+
+        next_reset = get_os_next_reset()
+        logger.info('OS voucher finished, delay to next reset')
+        logger.attr('OpsiNextReset', next_reset)
+        self.config.task_delay(target=next_reset)
+
     def os_meowfficer_farming(self):
         """
         Recommend 3 or 5 for higher meowfficer searching point per action points ratio.
         """
         logger.hr(f'OS meowfficer farming, hazard_level={self.config.OpsiMeowfficerFarming_HazardLevel}', level=1)
-        self.action_point_limit_override()
+        if self.is_cl1_enabled and self.config.OpsiMeowfficerFarming_ActionPointPreserve < 1000:
+            logger.info('With CL1 leveling enabled, set action point preserve to 1000')
+            self.config.OpsiMeowfficerFarming_ActionPointPreserve = 1000
+        preserve = min(self.get_action_point_limit(), self.config.OpsiMeowfficerFarming_ActionPointPreserve, 2000)
+        if preserve == 0:
+            self.config.override(OpsiFleet_Submarine=False)
+
+        ap_checked = False
         while 1:
-            self.config.OS_ACTION_POINT_PRESERVE = self.config.OpsiMeowfficerFarming_ActionPointPreserve
+            self.config.OS_ACTION_POINT_PRESERVE = preserve
             if self.config.OpsiAshBeacon_AshAttack \
                     and not self._ash_fully_collected \
                     and self.config.OpsiAshBeacon_EnsureFullyCollected:
                 logger.info('Ash beacon not fully collected, ignore action point limit temporarily')
                 self.config.OS_ACTION_POINT_PRESERVE = 0
             logger.attr('OS_ACTION_POINT_PRESERVE', self.config.OS_ACTION_POINT_PRESERVE)
+            if not ap_checked:
+                # Check action points first to avoid using remaining AP when it not enough for tomorrow's daily
+                # When not running CL1, use oil
+                keep_current_ap = True
+                if not self.is_cl1_enabled and self.config.OpsiGeneral_BuyActionPointLimit > 0:
+                    keep_current_ap = False
+                self.set_action_point(cost=0, keep_current_ap=keep_current_ap)
+                ap_checked = True
 
             # (1252, 1012) is the coordinate of zone 134 (the center zone) in os_globe_map.png
             if self.config.OpsiMeowfficerFarming_TargetZone != 0:
@@ -294,6 +337,55 @@ class OperationSiren(OSMap):
                 self.handle_after_auto_search()
                 self.config.check_task_switch()
 
+    def os_hazard1_leveling(self):
+        logger.hr('OS hazard 1 leveling', level=1)
+        self.config.override(OpsiGeneral_AkashiShopFilter='ActionPoint')
+        if not self.config.cross_get(keys='OpsiMeowfficerFarming.Scheduler.Enable', default=False):
+            self.config.cross_set(keys='OpsiMeowfficerFarming.Scheduler.Enable', value=True)
+        while 1:
+            # Limited action point preserve of hazard 1 to 200
+            self.config.OS_ACTION_POINT_PRESERVE = 200
+            if self.config.OpsiAshBeacon_AshAttack \
+                    and not self._ash_fully_collected \
+                    and self.config.OpsiAshBeacon_EnsureFullyCollected:
+                logger.info('Ash beacon not fully collected, ignore action point limit temporarily')
+                self.config.OS_ACTION_POINT_PRESERVE = 0
+            logger.attr('OS_ACTION_POINT_PRESERVE', self.config.OS_ACTION_POINT_PRESERVE)
+
+            if self.get_yellow_coins() < 100000:
+                logger.info('Reach the limit of yellow coins, preserve=100000')
+                with self.config.multi_set():
+                    self.config.task_delay(server_update=True)
+                    self.config.task_call('OpsiMeowfficerFarming')
+                self.config.task_stop()
+
+            self.get_current_zone()
+
+            # Preset action point to 100
+            # When running CL1 oil is for running CL1, not CL5
+            keep_current_ap = True
+            if self.config.OpsiGeneral_BuyActionPointLimit > 0:
+                keep_current_ap = False
+            self.set_action_point(cost=100, keep_current_ap=keep_current_ap)
+            if self._action_point_total >= 3000:
+                with self.config.multi_set():
+                    self.config.task_delay(server_update=True)
+                    self.config.task_call('OpsiMeowfficerFarming')
+                self.config.task_stop()
+
+            if self.config.OpsiHazard1Leveling_TargetZone != 0:
+                zone = self.config.OpsiHazard1Leveling_TargetZone
+            else:
+                zone = 44
+            logger.hr(f'OS hazard 1 leveling, zone_id={zone}', level=1)
+            if self.zone.zone_id != zone or not self.is_zone_name_hidden:
+                self.globe_goto(self.name_to_zone(zone), types='SAFE', refresh=True)
+            self.fleet_set(self.config.OpsiFleet_Fleet)
+            self.run_strategic_search()
+
+            self.handle_after_auto_search()
+            self.config.check_task_switch()
+
     def _os_explore_task_delay(self):
         """
         Delay other OpSi tasks during os_explore
@@ -301,7 +393,7 @@ class OperationSiren(OSMap):
         logger.info('Delay other OpSi tasks during OpsiExplore')
         with self.config.multi_set():
             next_run = self.config.Scheduler_NextRun
-            for task in ['OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold', 'OpsiMeowfficerFarming']:
+            for task in ['OpsiObscure', 'OpsiAbyssal', 'OpsiArchive', 'OpsiStronghold', 'OpsiMeowfficerFarming']:
                 keys = f'{task}.Scheduler.NextRun'
                 current = self.config.cross_get(keys=keys, default=DEFAULT_TIME)
                 if current < next_run:
@@ -431,6 +523,19 @@ class OperationSiren(OSMap):
             else:
                 break
 
+    def delay_abyssal(self, result=True):
+        """
+        Args:
+            result(bool): If still have obscure coordinates.
+        """
+        if get_os_reset_remain() == 0:
+            logger.info('Just less than 1 day to OpSi reset, delay 2.5 hours')
+            self.config.task_delay(minute=150, server_update=True)
+            self.config.task_stop()
+        elif self.is_cl1_enabled or not result:
+            self.config.task_delay(server_update=True)
+            self.config.task_stop()
+
     def clear_abyssal(self):
         """
         Get one abyssal logger in storage,
@@ -445,13 +550,7 @@ class OperationSiren(OSMap):
         logger.hr('OS clear abyssal', level=1)
         result = self.storage_get_next_item('ABYSSAL', use_logger=self.config.OpsiGeneral_UseLogger)
         if not result:
-            # No obscure coordinates, delay next run to tomorrow.
-            if get_os_reset_remain() > 0:
-                self.config.task_delay(server_update=True)
-            else:
-                logger.info('Just less than 1 day to OpSi reset, delay 2.5 hours')
-                self.config.task_delay(minute=150, server_update=True)
-            self.config.task_stop()
+            self.delay_abyssal(result=False)
 
         self.config.override(
             OpsiGeneral_DoRandomMapEvent=False,
@@ -464,11 +563,40 @@ class OperationSiren(OSMap):
             raise RequestHumanTakeover
 
         self.fleet_repair(revert=False)
+        self.delay_abyssal()
 
     def os_abyssal(self):
         while 1:
             self.clear_abyssal()
             self.config.check_task_switch()
+
+    def os_archive(self):
+        """
+        Complete active archive zone in daily mission
+        Purchase next available logger archive then repeat
+        until exhausted
+
+        Run on weekly basis, AL devs seemingly add new logger
+        archives after random scheduled maintenances
+        """
+        shop = VoucherShop(self.config, self.device)
+        while 1:
+            # In case logger bought manually,
+            # finish pre-existing archive zone
+            self.os_finish_daily_mission(question=False, rescan=False)
+
+            logger.hr('OS voucher', level=1)
+            self._os_voucher_enter()
+            bought = shop.run_once()
+            self._os_voucher_exit()
+            if not bought:
+                break
+
+        # Reset to nearest 'Wednesday' date
+        next_reset = get_nearest_weekday_date(target=2)
+        logger.info('All archive zones finished, delay to next reset')
+        logger.attr('OpsiNextReset', next_reset)
+        self.config.task_delay(target=next_reset)
 
     def clear_stronghold(self):
         """

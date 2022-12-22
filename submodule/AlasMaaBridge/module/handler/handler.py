@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import json
 import time
 import requests
@@ -27,19 +26,19 @@ class AssistantHandler:
     ASST_HANDLER: Any
 
     @staticmethod
-    def load(path):
-        sys.path.append(path)
+    def load(path, incremental_path=None):
         try:
             from submodule.AlasMaaBridge.module.handler import asst_backup
             AssistantHandler.Asst = asst_backup.Asst
             AssistantHandler.Message = asst_backup.Message
-            AssistantHandler.Asst.load(path, user_dir=path)
-        except:
+            AssistantHandler.Asst.load(path, user_dir=path, incremental_path=incremental_path)
+        except Exception as e:
+            logger.error(e)
             logger.warning('导入MAA失败，尝试使用原生接口导入')
             asst_module = import_module('.asst', 'Python')
             AssistantHandler.Asst = asst_module.Asst
             AssistantHandler.Message = asst_module.Message
-            AssistantHandler.Asst.load(path, user_dir=path)
+            AssistantHandler.Asst.load(path, user_dir=path, incremental_path=incremental_path)
 
         AssistantHandler.ASST_HANDLER = None
 
@@ -180,7 +179,7 @@ class AssistantHandler:
             self.serial = ConnectionAttr.find_bluestacks4_hyperv(self.serial)
         if self.is_bluestacks5_hyperv:
             self.serial = ConnectionAttr.find_bluestacks5_hyperv(self.serial)
-                    
+
     @cached_property
     def is_bluestacks4_hyperv(self):
         return "bluestacks4-hyperv" in self.serial
@@ -213,7 +212,6 @@ class AssistantHandler:
     def fight(self):
         args = {
             "report_to_penguin": self.config.MaaRecord_ReportToPenguin,
-            "server": self.config.MaaEmulator_Server,
             "client_type": self.config.MaaEmulator_PackageName,
             "DrGrandet": self.config.MaaFight_DrGrandet,
         }
@@ -226,6 +224,8 @@ class AssistantHandler:
 
         if self.config.MaaFight_Medicine is not None:
             args["medicine"] = self.config.MaaFight_Medicine
+        if self.config.MaaFight_RunOutOfMedicine:
+            args["medicine"] = 999
         if self.config.MaaFight_Stone is not None:
             args["stone"] = self.config.MaaFight_Stone
         if self.config.MaaFight_Times is not None:
@@ -353,16 +353,18 @@ class AssistantHandler:
             # 心情阈值 * 24 / 0.75 * 60
             self.config.task_delay(minute=self.config.MaaInfrast_Threshold * 1920)
 
-    def visit(self):
-        self.maa_start('Visit', {
-            "enable": True
-        })
-        self.config.task_delay(server_update=True)
-
     def mall(self):
         buy_first = self.split_filter(self.config.MaaMall_BuyFirst)
         blacklist = self.split_filter(self.config.MaaMall_BlackList)
+        credit_fight = self.config.MaaMall_CreditFight
+        if self.config.cross_get(keys='MaaMaterial.MaaFight.Stage') == 'last' \
+                and self.config.cross_get(keys='MaaMaterial.Scheduler.Enable', default=False):
+            credit_fight = False
+        if self.config.cross_get(keys='MaaFight.MaaFight.Stage') == 'last' \
+                and self.config.cross_get(keys='MaaFight.Scheduler.Enable', default=False):
+            credit_fight = False
         self.maa_start('Mall', {
+            "credit_fight": credit_fight,
             "shopping": self.config.MaaMall_Shopping,
             "buy_first": buy_first,
             "blacklist": blacklist,

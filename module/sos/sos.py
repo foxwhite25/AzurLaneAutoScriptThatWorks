@@ -5,7 +5,6 @@ from module.campaign.run import CampaignRun
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.sos.assets import *
-from module.template.assets import *
 from module.ui.assets import CAMPAIGN_CHECK
 from module.ui.page import page_campaign
 from module.ui.scroll import Scroll
@@ -57,7 +56,8 @@ class CampaignSos(CampaignRun, CampaignBase):
         """
         signal_search_buttons = TEMPLATE_SIGNAL_SEARCH.match_multi(self.device.image)
         sos_goto_buttons = TEMPLATE_SIGNAL_GOTO.match_multi(self.device.image)
-        all_buttons = sos_goto_buttons + signal_search_buttons
+        sos_confirm_buttons = TEMPLATE_SIGNAL_CONFIRM.match_multi(self.device.image)
+        all_buttons = sos_goto_buttons + signal_search_buttons + sos_confirm_buttons
         if not len(all_buttons):
             logger.info('No SOS chapter found')
             return None
@@ -172,6 +172,8 @@ class CampaignSos(CampaignRun, CampaignBase):
                 if TEMPLATE_SIGNAL_SEARCH.match(image):
                     self.device.click(entrance)
                 if TEMPLATE_SIGNAL_GOTO.match(image):
+                    self.device.click(entrance)
+                if TEMPLATE_SIGNAL_CONFIRM.match(image):
                     self.device.click(entrance)
 
             # End

@@ -14,13 +14,14 @@ class ConfigModel:
     Repository: str = "https://github.com/LmeSzinc/AzurLaneAutoScript"
     Branch: str = "master"
     GitExecutable: str = "./toolkit/Git/mingw64/bin/git.exe"
-    GitProxy: Optional[bool] = None
+    GitProxy: Optional[str] = None
+    SSLVerify: bool = False
     AutoUpdate: bool = True
     KeepLocalChanges: bool = False
 
     # Python
     PythonExecutable: str = "./toolkit/python.exe"
-    PypiMirror: Optional[bool] = None
+    PypiMirror: Optional[str] = None
     InstallDependencies: bool = True
     RequirementsFile: str = "requirements.txt"
 
@@ -144,18 +145,19 @@ class DeployConfig(ConfigModel):
                 return False
             else:
                 logger.info(f"[ failure ], error_code: {error_code}")
-                self.show_error(command, error_code)
+                self.show_error(command)
                 raise ExecutionError
         else:
             logger.info(f"[ success ]")
             return True
 
-    def show_error(self, command=None, error_code=None):
+    def show_error(self, command=None):
         logger.hr("Update failed", 0)
         self.show_config()
         logger.info("")
-        logger.info(f"Last command: {command}\nerror_code: {error_code}")
+        logger.info(f"Last command: {command}")
         logger.info(
             "Please check your deploy settings in config/deploy.yaml "
             "and re-open Alas.exe"
         )
+        logger.info("Take the screenshot of entire window if you need help")

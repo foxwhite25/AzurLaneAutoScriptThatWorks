@@ -327,6 +327,11 @@ OpsiShop:
     SuccessInterval: 30
     FailureInterval: 30
     ServerUpdate: 00:00
+OpsiVoucher:
+  Scheduler:
+    SuccessInterval: 30
+    FailureInterval: 30
+    ServerUpdate: 00:00
 OpsiDaily:
   Scheduler:
     SuccessInterval: 30
@@ -341,6 +346,11 @@ OpsiAbyssal:
   Scheduler:
     SuccessInterval: 60
     FailureInterval: 60
+    ServerUpdate: 00:00, 12:00
+OpsiArchive:
+  Scheduler:
+    SuccessInterval: 60
+    FailureInterval: 60
     ServerUpdate: 00:00
 OpsiStronghold:
   Scheduler:
@@ -352,3 +362,10 @@ OpsiMeowfficerFarming:
     SuccessInterval: 30
     FailureInterval: 30
     ServerUpdate: 00:00
+OpsiHazard1Leveling:
+  Scheduler:
+    SuccessInterval: 30
+    FailureInterval: 60
+    ServerUpdate: 00:00
+  OpsiFleet:
+    Submarine: false
