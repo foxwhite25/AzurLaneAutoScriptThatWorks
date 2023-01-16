@@ -222,6 +222,10 @@
       "name": "Task.OpsiStronghold.name",
       "help": "Task.OpsiStronghold.help"
     },
+    "OpsiMonthBoss": {
+      "name": "Task.OpsiMonthBoss.name",
+      "help": "Task.OpsiMonthBoss.help"
+    },
     "OpsiMeowfficerFarming": {
       "name": "Task.OpsiMeowfficerFarming.name",
       "help": "Task.OpsiMeowfficerFarming.help"
@@ -390,7 +394,8 @@
       "uiautomator2": "uiautomator2",
       "aScreenCap": "aScreenCap",
       "aScreenCap_nc": "aScreenCap_nc",
-      "DroidCast": "DroidCast"
+      "DroidCast": "DroidCast",
+      "scrcpy": "scrcpy"
     },
     "ControlMethod": {
       "name": "Emulator.ControlMethod.name",
@@ -414,6 +419,14 @@
       "name": "RestartEmulator._info.name",
       "help": "RestartEmulator._info.help"
     },
+    "Enable": {
+      "name": "RestartEmulator.Enable.name",
+      "help": "RestartEmulator.Enable.help"
+    },
+    "EmulatorData": {
+      "name": "RestartEmulator.EmulatorData.name",
+      "help": "RestartEmulator.EmulatorData.help"
+    },
     "ErrorRestart": {
       "name": "RestartEmulator.ErrorRestart.name",
       "help": "RestartEmulator.ErrorRestart.help"
@@ -421,14 +434,6 @@
     "DailyRestart": {
       "name": "RestartEmulator.DailyRestart.name",
       "help": "RestartEmulator.DailyRestart.help"
-    },
-    "EmulatorType": {
-      "name": "RestartEmulator.EmulatorType.name",
-      "help": "RestartEmulator.EmulatorType.help",
-      "auto": "auto",
-      "nox_player": "nox_player",
-      "bluestacks_5": "bluestacks_5",
-      "mumu_player": "mumu_player"
     }
   },
   "Error": {
@@ -607,6 +612,8 @@
       "name": "Campaign.Event.name",
       "help": "Campaign.Event.help",
       "campaign_main": "campaign_main",
+      "event_20210610_tw": "復刻夜幕下的歸途",
+      "event_20210225_cn": "暁射す氷華の嵐（復刻）",
       "event_20211229_cn": "遡望せし虹彩の塔",
       "event_20221222_cn": "積重なる事象の幻界",
       "event_20221124_cn": "錬金術士と謎の遺跡群島",
@@ -638,7 +645,6 @@
       "event_20220310_tw": "復刻斯圖爾特的硝煙",
       "event_20200603_cn": "峡湾間の反撃（復刻）",
       "event_20220224_cn": "鳴動せし星霜の淵",
-      "event_20210225_cn": "暁射す氷華の嵐",
       "event_20220210_cn": "凍絶の北海（復刻）",
       "raid_20220127": "秘密事件調査",
       "event_20211125_cn": "弧光は交わる世界にて",
@@ -649,7 +655,6 @@
       "event_20200723_cn": "極夜照らす幻光",
       "event_20210624_cn": "翳りし満ちる影の華(復刻)",
       "event_20210624_tw": "穹頂下的聖詠曲",
-      "event_20210610_tw": "夜幕下的歸途",
       "event_20210527_tw": "微層混合",
       "event_20210429_tw": "復刻墨染的鋼鐵之花",
       "event_20210415_tw": "復刻圍剿施佩伯爵",
@@ -1183,10 +1188,10 @@
     "PresetFilter": {
       "name": "Commission.PresetFilter.name",
       "help": "Commission.PresetFilter.help",
-      "chip": "chip",
-      "chip_24h": "chip_24h",
       "cube": "cube",
       "cube_24h": "cube_24h",
+      "chip": "chip",
+      "chip_24h": "chip_24h",
       "oil": "oil",
       "custom": "custom"
     },
@@ -2138,6 +2143,26 @@
       "help": "OpsiStronghold.ForceRun.help"
     }
   },
+  "OpsiMonthBoss": {
+    "_info": {
+      "name": "OpsiMonthBoss._info.name",
+      "help": "OpsiMonthBoss._info.help"
+    },
+    "Mode": {
+      "name": "OpsiMonthBoss.Mode.name",
+      "help": "OpsiMonthBoss.Mode.help",
+      "normal": "normal",
+      "normal_hard": "normal_hard"
+    },
+    "CheckAdaptability": {
+      "name": "OpsiMonthBoss.CheckAdaptability.name",
+      "help": "OpsiMonthBoss.CheckAdaptability.help"
+    },
+    "ForceRun": {
+      "name": "OpsiMonthBoss.ForceRun.name",
+      "help": "OpsiMonthBoss.ForceRun.help"
+    }
+  },
   "OpsiMeowfficerFarming": {
     "_info": {
       "name": "OpsiMeowfficerFarming._info.name",
@@ -2236,10 +2261,6 @@
     "MinitouchClick": {
       "name": "Benchmark.MinitouchClick.name",
       "help": "Benchmark.MinitouchClick.help"
-    },
-    "HermitClick": {
-      "name": "Benchmark.HermitClick.name",
-      "help": "Benchmark.HermitClick.help"
     }
   },
   "AzurLaneUncensored": {

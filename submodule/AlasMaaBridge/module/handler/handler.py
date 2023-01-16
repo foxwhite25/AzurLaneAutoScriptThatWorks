@@ -4,7 +4,6 @@ import json
 import time
 import requests
 import datetime
-from importlib import import_module
 from typing import Any
 
 from cached_property import cached_property
@@ -17,28 +16,22 @@ from module.exception import RequestHumanTakeover
 from module.logger import logger
 
 from submodule.AlasMaaBridge.module.config.config import ArknightsConfig
+from submodule.AlasMaaBridge.module.handler import asst_backup
 
 
 class AssistantHandler:
     config: ArknightsConfig
     Asst: Any
     Message: Any
+    InstanceOptionType: Any
     ASST_HANDLER: Any
 
     @staticmethod
     def load(path, incremental_path=None):
-        try:
-            from submodule.AlasMaaBridge.module.handler import asst_backup
-            AssistantHandler.Asst = asst_backup.Asst
-            AssistantHandler.Message = asst_backup.Message
-            AssistantHandler.Asst.load(path, user_dir=path, incremental_path=incremental_path)
-        except Exception as e:
-            logger.error(e)
-            logger.warning('导入MAA失败，尝试使用原生接口导入')
-            asst_module = import_module('.asst', 'Python')
-            AssistantHandler.Asst = asst_module.Asst
-            AssistantHandler.Message = asst_module.Message
-            AssistantHandler.Asst.load(path, user_dir=path, incremental_path=incremental_path)
+        AssistantHandler.Asst = asst_backup.Asst
+        AssistantHandler.Message = asst_backup.Message
+        AssistantHandler.InstanceOptionType = asst_backup.InstanceOptionType
+        AssistantHandler.Asst.load(path, user_dir=path, incremental_path=incremental_path)
 
         AssistantHandler.ASST_HANDLER = None
 
@@ -56,7 +49,8 @@ class AssistantHandler:
         self.interval_timer = {}
         AssistantHandler.ASST_HANDLER = self
         self.asst = asst
-        self.callback_timer = Timer(3600)
+        self.callback_timer = Timer(600)
+        self.serial = None
         self.signal = None
         self.params = None
         self.task_id = None
@@ -67,8 +61,13 @@ class AssistantHandler:
         return [f.strip(' \t\r\n') for f in string.split(sep)]
 
     def maa_stop(self):
+        self.callback_list.append(self.task_end_callback)
         self.asst.stop()
         while 1:
+            if self.callback_timer.reached():
+                logger.critical('MAA no respond, probably stuck')
+                raise RequestHumanTakeover
+
             if self.signal in [
                 self.Message.AllTasksCompleted,
                 self.Message.TaskChainCompleted,
@@ -111,12 +110,14 @@ class AssistantHandler:
             m (Message): 消息类型
             d (dict): 消息详情
         """
+        self.callback_timer.reset()
         if m in [
             self.Message.AllTasksCompleted,
             self.Message.TaskChainError,
             self.Message.TaskChainStopped
         ]:
             self.signal = m
+            self.callback_list.remove(self.task_end_callback)
 
     def penguin_id_callback(self, m, d):
         if not self.config.MaaRecord_PenguinID \

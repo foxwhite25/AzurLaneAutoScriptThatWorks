@@ -10,9 +10,10 @@ from module.exception import CampaignEnd, RequestHumanTakeover
 from module.exception import GameTooManyClickError, GameStuckError
 from module.exception import MapWalkError, ScriptError
 from module.exercise.assets import QUIT_CONFIRM, QUIT_RECONFIRM
+from module.handler.login import LoginHandler
 from module.logger import logger
 from module.map.map import Map
-from module.os.assets import FLEET_EMP_DEBUFF
+from module.os.assets import FLEET_EMP_DEBUFF, MAP_GOTO_GLOBE_FOG
 from module.os.fleet import OSFleet
 from module.os.globe_camera import GlobeCamera
 from module.os.globe_operation import RewardUncollectedError
@@ -21,8 +22,7 @@ from module.os_handler.assets import AUTO_SEARCH_OS_MAP_OPTION_OFF, \
 from module.os_handler.shop import OCR_SHOP_YELLOW_COINS
 from module.os_handler.strategic import StrategicSearchHandler
 from module.ui.assets import GOTO_MAIN
-from module.ui.page import page_main
-from module.ui.ui import page_os
+from module.ui.page import page_main, page_os
 
 
 class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
@@ -127,6 +127,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
                 self.globe_goto(self.zone_nearest_azur_port(self.zone),
                                 types=('SAFE', 'DANGEROUS'), refresh=False)
             else:
+                if self.is_in_globe():
+                    self.os_globe_goto_map()
                 logger.info('Already at target zone')
                 return False
         # MAP_EXIT
@@ -359,6 +361,37 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         logger.warning('Failed to solve EMP debuff after 5 trial, assume solved')
         return True
 
+    def handle_fog_block(self, repair=True):
+        """
+        AL game bug where fog remains in OpSi
+        even after jumping between zones or
+        other pages
+        Recover by restarting the game to
+        alleviate and resume OpSi task
+
+        Args:
+            repair (bool): call handle_fleet_repair after restart
+        """
+        if not self.appear(MAP_GOTO_GLOBE_FOG):
+            return False
+
+        logger.warn('Triggered stuck fog status, restarting '
+                    'game to resolve and continue '
+                   f'{self.config.task.command}')
+
+        # Restart the game manually rather
+        # than through 'task_call'
+        # Ongoing task is uninterrupted
+        self.device.app_stop()
+        self.device.app_start()
+        LoginHandler(self.config, self.device).handle_app_login()
+
+        self.ui_ensure(page_os)
+        if repair:
+            self.handle_fleet_repair(revert=False)
+
+        return True
+
     def get_action_point_limit(self):
         """
         Override user config at the end of every month.
@@ -429,6 +462,17 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
 
         return yellow_coins
 
+    def cl1_ap_preserve(self):
+        """
+        Keeping enough startup AP to run CL1.
+        """
+        if self.is_cl1_enabled and get_os_reset_remain() > 2 \
+                and self.get_yellow_coins() > self.config.OS_CL1_YELLOW_COINS_PRESERVE:
+            logger.info('Keep 1000 AP when CL1 available')
+            if not self.action_point_check(1000):
+                self.config.opsi_task_delay(cl1_preserve=True)
+                self.config.task_stop()
+
     _auto_search_battle_count = 0
     _auto_search_round_timer = 0
 
@@ -465,6 +509,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
 
         success = True
         died_timer = Timer(1.5, count=3)
+        self.hp_reset()
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -510,9 +555,11 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
                     self.interrupt_auto_search()
                 result = self.auto_search_combat(drop=drop)
                 if not result:
-                    success = False
-                    logger.warning('Fleet died, stop auto search')
-                    continue
+                    self.hp_get()
+                    if any(self.need_repair):
+                        success = False
+                        logger.warning('Fleet died, stop auto search')
+                        continue
             if self.handle_map_event():
                 # Auto search can not handle siren searching device.
                 continue

@@ -34,18 +34,34 @@ class InfoHandler(ModuleBase):
     """
 
     def info_bar_count(self):
-        if self.appear(INFO_BAR_3):
-            return 3
-        elif self.appear(INFO_BAR_2):
-            return 2
-        elif self.appear(INFO_BAR_1):
-            return 1
-        else:
-            return 0
+        """
+        Detect info bar by the blue lines on the top of it.
+
+        Returns:
+            int:
+        """
+        image = self.image_crop(INFO_BAR_AREA)
+        line = cv2.reduce(image, 1, cv2.REDUCE_AVG)
+        line = color_similarity_2d(line, color=(107, 158, 255))[:, 0]
+
+        parameters = {
+            'height': 235,
+            'prominence': 50,
+            # Blue lines are in a interval of 56
+            'distance': 50,
+        }
+        peaks, _ = signal.find_peaks(line, **parameters)
+        return len(peaks)
+
+    def wait_until_info_bar_disappear(self):
+        while 1:
+            self.device.screenshot()
+            if not self.info_bar_count():
+                break
 
     def handle_info_bar(self):
         if self.info_bar_count():
-            self.wait_until_disappear(INFO_BAR_1)
+            self.wait_until_info_bar_disappear()
             return True
         else:
             return False
@@ -167,8 +183,8 @@ class InfoHandler(ModuleBase):
                 else:
                     self.device.screenshot()
 
-                enabled = self.image_color_count(USE_DATA_KEY_NOTIFIED,
-                    color=(140, 207, 66), threshold=180, count=10)
+                enabled = self.image_color_count(
+                    USE_DATA_KEY_NOTIFIED, color=(140, 207, 66), threshold=180, count=10)
                 if enabled:
                     break
 
@@ -280,6 +296,18 @@ class InfoHandler(ModuleBase):
 
         return buttons
 
+    def _is_story_black(self):
+        color = get_color(self.device.image, area=STORY_LETTER_BLACK.area)
+        # Story with dark background and a few rows of letters
+        # STORY_LETTER_BLACK.color is (16, 20, 16)
+        if color_similar(color, STORY_LETTER_BLACK.color, threshold=10):
+            return True
+        # Story with black and a few rows of letters
+        if color_similar(color, (0, 0, 0), threshold=10):
+            return True
+
+        return False
+
     def story_skip(self, drop=None):
         if self.story_popup_timeout.started() and not self.story_popup_timeout.reached():
             if self.handle_popup_confirm('STORY_SKIP'):
@@ -287,9 +315,10 @@ class InfoHandler(ModuleBase):
                 self.interval_reset(STORY_SKIP)
                 self.interval_reset(STORY_LETTERS_ONLY)
                 return True
-        if self.appear(STORY_LETTER_BLACK) and self.appear_then_click(STORY_LETTERS_ONLY, offset=(20, 20), interval=2):
-            self.story_popup_timeout.reset()
-            return True
+        if self._is_story_black():
+            if self.appear_then_click(STORY_LETTERS_ONLY, offset=(20, 20), interval=2):
+                self.story_popup_timeout.reset()
+                return True
         if self._story_option_timer.reached() and self.appear(STORY_SKIP, offset=(20, 20), interval=0):
             options = self._story_option_buttons()
             options_count = len(options)

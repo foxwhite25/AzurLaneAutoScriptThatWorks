@@ -8,7 +8,7 @@ from module.campaign.campaign_base import CampaignBase
 from module.campaign.campaign_event import CampaignEvent
 from module.config.config import AzurLaneConfig
 from module.exception import CampaignEnd, RequestHumanTakeover, ScriptEnd
-from module.handler.fast_forward import map_files
+from module.handler.fast_forward import map_files, to_map_file_name
 from module.logger import logger
 
 
@@ -99,7 +99,6 @@ class CampaignRun(CampaignEvent):
         # Event limit
         if oil_check and self.campaign.event_pt_limit_triggered():
             logger.hr('Triggered stop condition: Event PT limit')
-            self.config.Scheduler_Enable = False
             return True
 
         return False
@@ -137,9 +136,8 @@ class CampaignRun(CampaignEvent):
             str, str: name, folder
         """
         name = re.sub('[ \t\n]', '', str(name)).lower()
+        name = to_map_file_name(name)
         # Handle special names SP maps
-        if name[0].isdigit():
-            name = 'campaign_' + name.lower().replace('-', '_')
         if folder == 'event_20201126_cn' and name == 'vsp':
             name = 'sp'
         if folder == 'event_20210723_cn' and name == 'vsp':
@@ -198,6 +196,18 @@ class CampaignRun(CampaignEvent):
                                 f'run ordered stage: {stage}')
                 name = stage.lower()
                 self.is_stage_loop = True
+        # For GemsFarming, auto choose events or main chapters
+        if self.config.task.command == 'GemsFarming':
+            if self.stage_is_main(name):
+                logger.info(f'Stage name {name} is from campaign_main')
+                folder = 'campaign_main'
+            else:
+                folder = self.config.cross_get('Event.Campaign.Event')
+                if folder is not None:
+                    logger.info(f'Stage name {name} is from event {folder}')
+                else:
+                    logger.warning(f'Cannot get the latest event, fallback to campaign_main')
+                    folder = 'campaign_main'
 
         return name, folder
 
@@ -234,6 +244,7 @@ class CampaignRun(CampaignEvent):
             total (int):
         """
         name, folder = self.handle_stage_name(name, folder)
+        self.config.override(Campaign_Name=name, Campaign_Event=folder)
         self.load_campaign(name, folder=folder)
         self.run_count = 0
         self.run_limit = self.config.StopCondition_RunCount

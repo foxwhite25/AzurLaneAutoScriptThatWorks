@@ -246,17 +246,19 @@ class Combat(Combat_, MapEventHandler):
 
             if self.handle_submarine_call(submarine_mode):
                 continue
-            if self.handle_os_auto_search_map_option(drop=drop, enable=success):
+            # Don't change auto search option if failed
+            enable = success if success is not None else None
+            if self.handle_os_auto_search_map_option(drop=drop, enable=enable):
                 continue
 
             # End
             if self.is_combat_executing():
                 continue
             if self.handle_auto_search_battle_status():
-                success = False
+                success = None
                 continue
             if self.handle_auto_search_exp_info():
-                success = False
+                success = None
                 continue
             if self.handle_map_event():
                 continue

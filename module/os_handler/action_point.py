@@ -1,13 +1,14 @@
 from datetime import datetime
 
 import module.config.server as server
-from module.config.utils import get_server_next_update
 from module.base.button import ButtonGrid
 from module.base.timer import Timer
 from module.base.utils import *
+from module.config.utils import get_server_next_update
 from module.logger import logger
 from module.ocr.ocr import Digit, DigitCounter
 from module.os_handler.assets import *
+from module.os_handler.map_event import MapEventHandler
 from module.statistics.item import Item, ItemGrid
 from module.ui.assets import OS_CHECK
 from module.ui.ui import UI
@@ -15,13 +16,32 @@ from module.ui.ui import UI
 OCR_ACTION_POINT_REMAIN = Digit(ACTION_POINT_REMAIN, letter=(255, 219, 66), name='OCR_ACTION_POINT_REMAIN')
 OCR_ACTION_POINT_REMAIN_OS = Digit(ACTION_POINT_REMAIN_OS, letter=(239, 239, 239),
                                    threshold=160, name='OCR_SHOP_YELLOW_COINS_OS')
+
+OCR_OS_ADAPTABILITY = Digit([
+    OS_ADAPTABILITY_ATTACK,
+    OS_ADAPTABILITY_DURABILITY,
+    OS_ADAPTABILITY_RECOVER
+], letter=(231, 235, 239), lang="cnocr", name='OCR_OS_ADAPTABILITY')
+
+
+class ActionPointBuyCounter(DigitCounter):
+    def after_process(self, result):
+        result = super().after_process(result)
+
+        # Possible result: 0/5, 05
+        if result == '05':
+            result = '0/5'
+
+        return result
+
+
 if server.server != 'jp':
     # Letters in ACTION_POINT_BUY_REMAIN are not the numeric fonts usually used in azur lane.
-    OCR_ACTION_POINT_BUY_REMAIN = DigitCounter(
+    OCR_ACTION_POINT_BUY_REMAIN = ActionPointBuyCounter(
         ACTION_POINT_BUY_REMAIN, letter=(148, 247, 99), lang='cnocr', name='OCR_ACTION_POINT_BUY_REMAIN')
 else:
     # The color of the digits ACTION_POINT_BUY_REMAIN is white in JP, which is light green in CN and EN.
-    OCR_ACTION_POINT_BUY_REMAIN = DigitCounter(
+    OCR_ACTION_POINT_BUY_REMAIN = ActionPointBuyCounter(
         ACTION_POINT_BUY_REMAIN, letter=(255, 255, 255), lang='cnocr', name='OCR_ACTION_POINT_BUY_REMAIN')
 
 
@@ -77,7 +97,7 @@ class ActionPointLimit(Exception):
     pass
 
 
-class ActionPointHandler(UI):
+class ActionPointHandler(UI, MapEventHandler):
     _action_point_box = [0, 0, 0, 0]
     _action_point_current = 0
     _action_point_total = 0
@@ -137,7 +157,14 @@ class ActionPointHandler(UI):
 
             self.action_point_update()
 
-            if sum(self._action_point_box[1:]) > 0 and self._action_point_box[0] > 0:
+            # Having too many current AP, probably an OCR error
+            if self._action_point_current > 600:
+                continue
+            # Having boxes
+            if sum(self._action_point_box[1:]) > 0:
+                break
+            # Or having oil
+            if self._action_point_box[0] > 0:
                 break
 
     @staticmethod
@@ -209,6 +236,39 @@ class ActionPointHandler(UI):
         logger.warning('Failed to set action point button after 3 trial')
         return False
 
+    def action_point_get_buy_remain(self, skip_first_screenshot=True):
+        """
+        Args:
+            skip_first_screenshot:
+
+        Returns:
+            int: Remaining number of purchases of action points
+
+        Pages:
+            in: ACTION_POINT_USE
+        """
+        timeout = Timer(1, count=2).start()
+        current = 0
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if timeout.reached():
+                logger.warning('Get action points buy remain timeout')
+                break
+
+            current, _, total = OCR_ACTION_POINT_BUY_REMAIN.ocr(self.device.image)
+
+            # Possible result: 0/5, 05
+            if total == 0:
+                continue
+
+            break
+
+        return current
+
     def action_point_buy(self, preserve=1000):
         """
         Use oil to buy action points.
@@ -218,9 +278,12 @@ class ActionPointHandler(UI):
 
         Returns:
             bool: If bought
+
+        Pages:
+            in: ACTION_POINT_USE
         """
         self.action_point_set_button(0)
-        current, _, _ = OCR_ACTION_POINT_BUY_REMAIN.ocr(self.device.image)
+        current = self.action_point_get_buy_remain()
         buy_max = 5  # In current version of AL, players can buy 5 times of AP in a week.
         buy_count = buy_max - current
         buy_limit = self.config.OpsiGeneral_BuyActionPointLimit
@@ -245,14 +308,16 @@ class ActionPointHandler(UI):
         """
         self.ui_click(ACTION_POINT_CANCEL, check_button=OS_CHECK, skip_first_screenshot=skip_first_screenshot)
 
-    def handle_action_point(self, zone, pinned, cost=None, keep_current_ap=True):
+    def handle_action_point(self, zone, pinned, cost=None, keep_current_ap=True, check_rest_ap=False):
         """
         Args:
             zone (Zone): Zone to enter.
             pinned (str): Zone type. Available types: DANGEROUS, SAFE, OBSCURE, ABYSSAL, STRONGHOLD.
             cost (int): Custom action point cost value.
             keep_current_ap (bool): Check action points first to avoid using remaining AP
-                when it not enough for tomorrow's daily
+                when it is not enough for tomorrow's daily.
+            check_rest_ap (bool): Skip keep_current_ap if the sum of current action points and rest action points
+                that can be obtained today exceeds 200.
 
         Returns:
             bool: If handled.
@@ -271,13 +336,20 @@ class ActionPointHandler(UI):
         if cost is None:
             cost = self.action_point_get_cost(zone, pinned)
         buy_checked = False
-        diff = get_server_next_update('00:00') - datetime.now()
-        today_rest = int(diff.total_seconds() // 600)
-        if keep_current_ap:
+
+        # Check the rest action points
+        if check_rest_ap:
+            diff = get_server_next_update('00:00') - datetime.now()
+            today_rest = int(diff.total_seconds() // 600)
             if self._action_point_current + today_rest >= 200:
-                logger.info(f'The sum of the current action points and the rest action points that can be obtained today exceeds 200.')
+                logger.info('The sum of the current action points and the rest action points'
+                            ' that can be obtained today exceeds 200, skip AP check')
                 logger.info(f'Current={self._action_point_current}  Rest={today_rest}')
-            elif self._action_point_total <= self.config.OS_ACTION_POINT_PRESERVE:
+                keep_current_ap = False
+
+        # Check action points first
+        if keep_current_ap:
+            if self._action_point_total <= self.config.OS_ACTION_POINT_PRESERVE:
                 logger.info(f'Reach the limit of action points, preserve={self.config.OS_ACTION_POINT_PRESERVE}')
                 self.action_point_quit()
                 raise ActionPointLimit
@@ -323,7 +395,30 @@ class ActionPointHandler(UI):
         logger.warning('Failed to get action points after 12 trial')
         return False
 
-    def set_action_point(self, zone=None, pinned=None, cost=None, keep_current_ap=True):
+    def action_point_enter(self, skip_first_screenshot=True):
+        """
+        Pages:
+            in: OS_CHECK
+            out: ACTION_POINT_USE
+        """
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if self.appear(ACTION_POINT_USE, offset=(20, 20)):
+                break
+
+            if self.appear(OS_CHECK, offset=(20, 20), interval=3):
+                self.device.click(ACTION_POINT_REMAIN_OS)
+                continue
+            if self.handle_map_event():
+                continue
+            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50)):
+                continue
+
+    def action_point_set(self, zone=None, pinned=None, cost=None, keep_current_ap=True, check_rest_ap=False):
         """
         Args:
             zone (Zone): Zone to enter.
@@ -331,15 +426,47 @@ class ActionPointHandler(UI):
             cost (int): Custom action point cost value.
             keep_current_ap (bool): Check action points first to avoid using remaining AP
                 when it not enough for tomorrow's daily
+            check_rest_ap (bool): Skip keep_current_ap if the sum of current action points and rest action points
+                that can be obtained today exceeds 200.
 
         Returns:
             bool: If handled.
+
+        Raises:
+            ActionPointLimit: If not having enough action points.
         """
-        self.ui_click(ACTION_POINT_REMAIN_OS, ACTION_POINT_USE, OS_CHECK)
-        if not self.handle_action_point(zone, pinned, cost, keep_current_ap):
+        self.action_point_enter()
+        if not self.handle_action_point(zone, pinned, cost, keep_current_ap, check_rest_ap):
             return False
 
         while 1:
             if self.appear(IN_MAP, offset=(200, 5)):
-                return True
+                break
             self.device.screenshot()
+
+        return True
+
+    def action_point_check(self, amount):
+        """
+        Args:
+            amount: Check if having this amount of action points.
+
+        Returns:
+            bool: If having enough AP.
+        """
+        self.action_point_enter()
+        self.action_point_safe_get()
+
+        enough = self._action_point_total > amount
+        if enough:
+            logger.info(f'Having {amount} action points')
+        else:
+            logger.info(f'Not having {amount} action points')
+
+        self.action_point_quit()
+        while 1:
+            if self.appear(IN_MAP, offset=(200, 5)):
+                break
+            self.device.screenshot()
+
+        return enough

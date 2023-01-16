@@ -92,7 +92,7 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
                 # Handled with dirty timeout, a better fix is required
                 logger.warning('Wait _retirement_confirm timeout, assume finished')
                 break
-            if self.appear(IN_RETIREMENT_CHECK):
+            if self.appear(IN_RETIREMENT_CHECK, offset=(20, 20)):
                 if executed:
                     self.handle_info_bar()
                     break
@@ -195,7 +195,7 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
                     end = True
                     total = 10
                     break
-                elif self.appear_then_click(ONE_CLICK_RETIREMENT, interval=2):
+                elif self.appear_then_click(ONE_CLICK_RETIREMENT, offset=(20, 20), interval=2):
                     click_count += 1
                     continue
 

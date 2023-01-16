@@ -52,6 +52,12 @@ class Mail(UI):
             if self.appear(MAIL_EMPTY, offset=(20, 20)):
                 logger.info('Mail list empty')
                 return False
+            if self.appear(MAIL_EMPTY_2, offset=(20, 20)):
+                logger.info('Mail list empty')
+                return False
+            if self.appear(MAIL_GUILD_MESSAGE, offset=(20, 20)):
+                logger.info('Guild mail found, exit')
+                return False
             if not delete and self._mail_selected(btn_expanded):
                 if self.appear(MAIL_COLLECT, offset=(20, 20)):
                     return True

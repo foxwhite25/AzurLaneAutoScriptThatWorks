@@ -12,19 +12,19 @@ from module.map.map_grids import SelectedGrids
 from module.os.fleet import BossFleet
 from module.os.globe_operation import OSExploreError
 from module.os.map import OSMap
-from module.os_handler.assets import EXCHANGE_CHECK, EXCHANGE_ENTER
+from module.os_handler.action_point import OCR_OS_ADAPTABILITY
+from module.os_handler.assets import OS_MONTHBOSS_NORMAL, OS_MONTHBOSS_HARD, EXCHANGE_CHECK, EXCHANGE_ENTER
 from module.shop.shop_voucher import VoucherShop
 
 
 class OperationSiren(OSMap):
-    def os_port_daily(self, mission=True, supply=True):
+    def os_port_daily(self, supply=True):
         """
         Accept all missions and buy all supplies in all ports.
         If reach the maximum number of missions, skip accept missions in next port.
         If not having enough yellow coins or purple coins, skip buying supplies in next port.
 
         Args:
-            mission (bool): If needs to accept missions.
             supply (bool): If needs to buy supplies.
 
         Returns:
@@ -80,9 +80,10 @@ class OperationSiren(OSMap):
             rescan (None, bool): refer to run_auto_search
 
         Returns:
-            bool: True if all finished.
+            int: Number of missions finished
         """
         logger.hr('OS finish daily mission', level=1)
+        count = 0
         while 1:
             result = self.os_get_next_mission()
             if not result:
@@ -100,9 +101,10 @@ class OperationSiren(OSMap):
                 submarine_call=self.config.OpsiFleet_Submarine and result != 'pinned_at_archive_zone')
             self.run_auto_search(question, rescan)
             self.handle_after_auto_search()
+            count += 1
             self.config.check_task_switch()
 
-        return True
+        return count
 
     def os_daily(self):
         # Finish existing missions first
@@ -172,6 +174,8 @@ class OperationSiren(OSMap):
 
         self.is_in_opsi_explore = false_func
         self.config.task_switched = false_func
+        count = 0
+        empty_trial = 0
         while 1:
             # If unable to receive more dailies, finish them and try again.
             success = self.os_mission_overview_accept()
@@ -180,7 +184,16 @@ class OperationSiren(OSMap):
             # need to confirm that the animation has ended,
             # or it will click on MAP_GOTO_GLOBE
             self.zone_init()
-            self.os_finish_daily_mission()
+            if empty_trial >= 5:
+                logger.warning('No Opsi dailies found within 5 min, stop waiting')
+                break
+            count += self.os_finish_daily_mission()
+            if not count:
+                logger.warning('Did not receive any OpSi dailies, '
+                               'probably game dailies are not refreshed, wait 1 minute')
+                empty_trial += 1
+                self.device.sleep(60)
+                continue
             if success:
                 break
 
@@ -249,7 +262,7 @@ class OperationSiren(OSMap):
             self.handle_after_auto_search()
 
     def os_shop(self):
-        self.os_port_daily(mission=False, supply=self.config.OpsiShop_BuySupply)
+        self.os_port_daily(supply=self.config.OpsiShop_BuySupply)
         self.config.task_delay(server_update=True)
 
     def _os_voucher_enter(self):
@@ -290,6 +303,10 @@ class OperationSiren(OSMap):
                 OpsiGeneral_DoRandomMapEvent=True,
                 OpsiGeneral_AkashiShopFilter='ActionPoint',
             )
+        if self.is_in_opsi_explore():
+            logger.warning(f'OpsiExplore is still running, cannot do {self.config.task.command}')
+            self.config.task_delay(server_update=True)
+            self.config.task_stop()
 
         ap_checked = False
         while 1:
@@ -302,11 +319,14 @@ class OperationSiren(OSMap):
             logger.attr('OS_ACTION_POINT_PRESERVE', self.config.OS_ACTION_POINT_PRESERVE)
             if not ap_checked:
                 # Check action points first to avoid using remaining AP when it not enough for tomorrow's daily
-                # When not running CL1, use oil
+                # When not running CL1 and use oil
                 keep_current_ap = True
+                check_rest_ap = True
+                if self.is_cl1_enabled:
+                    check_rest_ap = False
                 if not self.is_cl1_enabled and self.config.OpsiGeneral_BuyActionPointLimit > 0:
                     keep_current_ap = False
-                self.set_action_point(cost=0, keep_current_ap=keep_current_ap)
+                self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap)
                 ap_checked = True
 
             # (1252, 1012) is the coordinate of zone 134 (the center zone) in os_globe_map.png
@@ -362,25 +382,27 @@ class OperationSiren(OSMap):
                 self.config.OS_ACTION_POINT_PRESERVE = 0
             logger.attr('OS_ACTION_POINT_PRESERVE', self.config.OS_ACTION_POINT_PRESERVE)
 
-            if self.get_yellow_coins() < 100000:
-                logger.info('Reach the limit of yellow coins, preserve=100000')
+            if self.get_yellow_coins() < self.config.OS_CL1_YELLOW_COINS_PRESERVE:
+                logger.info(f'Reach the limit of yellow coins, preserve={self.config.OS_CL1_YELLOW_COINS_PRESERVE}')
                 with self.config.multi_set():
                     self.config.task_delay(server_update=True)
-                    self.config.task_call('OpsiMeowfficerFarming')
+                    if not self.is_in_opsi_explore():
+                        self.config.task_call('OpsiMeowfficerFarming')
                 self.config.task_stop()
 
             self.get_current_zone()
 
             # Preset action point to 100
-            # When running CL1 oil is for running CL1, not CL5
+            # When running CL1 oil is for running CL1, not meowfficer farming
             keep_current_ap = True
             if self.config.OpsiGeneral_BuyActionPointLimit > 0:
                 keep_current_ap = False
-            self.set_action_point(cost=100, keep_current_ap=keep_current_ap)
+            self.action_point_set(cost=100, keep_current_ap=keep_current_ap, check_rest_ap=True)
             if self._action_point_total >= 3000:
                 with self.config.multi_set():
                     self.config.task_delay(server_update=True)
-                    self.config.task_call('OpsiMeowfficerFarming')
+                    if not self.is_in_opsi_explore():
+                        self.config.task_call('OpsiMeowfficerFarming')
                 self.config.task_stop()
 
             if self.config.OpsiHazard1Leveling_TargetZone != 0:
@@ -403,7 +425,8 @@ class OperationSiren(OSMap):
         logger.info('Delay other OpSi tasks during OpsiExplore')
         with self.config.multi_set():
             next_run = self.config.Scheduler_NextRun
-            for task in ['OpsiObscure', 'OpsiAbyssal', 'OpsiArchive', 'OpsiStronghold', 'OpsiMeowfficerFarming']:
+            for task in ['OpsiObscure', 'OpsiAbyssal', 'OpsiArchive', 'OpsiStronghold', 'OpsiMeowfficerFarming',
+                         "OpsiMonthBoss"]:
                 keys = f'{task}.Scheduler.NextRun'
                 current = self.config.cross_get(keys=keys, default=DEFAULT_TIME)
                 if current < next_run:
@@ -432,6 +455,7 @@ class OperationSiren(OSMap):
                 self.config.task_delay(target=next_reset)
                 self.config.task_call('OpsiDaily', force_call=False)
                 self.config.task_call('OpsiShop', force_call=False)
+                self.config.task_call('OpsiHazard1Leveling', force_call=False)
             self.config.task_stop()
 
         logger.hr('OS explore', level=1)
@@ -496,6 +520,7 @@ class OperationSiren(OSMap):
             ActionPointLimit:
         """
         logger.hr('OS clear obscure', level=1)
+        self.cl1_ap_preserve()
         if self.config.OpsiObscure_ForceRun:
             logger.info('OS obscure finish is under force run')
 
@@ -542,7 +567,7 @@ class OperationSiren(OSMap):
             logger.info('Just less than 1 day to OpSi reset, delay 2.5 hours')
             self.config.task_delay(minute=150, server_update=True)
             self.config.task_stop()
-        elif self.is_cl1_enabled or not result:
+        elif not result:
             self.config.task_delay(server_update=True)
             self.config.task_stop()
 
@@ -558,6 +583,8 @@ class OperationSiren(OSMap):
             RequestHumanTakeover: If unable to clear boss, fleets exhausted.
         """
         logger.hr('OS clear abyssal', level=1)
+        self.cl1_ap_preserve()
+
         result = self.storage_get_next_item('ABYSSAL', use_logger=self.config.OpsiGeneral_UseLogger)
         if not result:
             self.delay_abyssal(result=False)
@@ -620,6 +647,8 @@ class OperationSiren(OSMap):
             RequestHumanTakeover: If unable to clear boss, fleets exhausted.
         """
         logger.hr('OS clear stronghold', level=1)
+        self.cl1_ap_preserve()
+
         self.os_map_goto_globe()
         self.globe_update()
         zone = self.find_siren_stronghold()
@@ -671,6 +700,7 @@ class OperationSiren(OSMap):
                 # Re-enter to reset fleet position
                 prev = self.zone
                 self.globe_goto(self.zone_nearest_azur_port(self.zone))
+                self.handle_fog_block(repair=True)
                 self.globe_goto(prev, types='STRONGHOLD')
                 return False
             else:
@@ -678,6 +708,7 @@ class OperationSiren(OSMap):
                 # Re-enter to reset fleet position
                 prev = self.zone
                 self.globe_goto(self.zone_nearest_azur_port(self.zone))
+                self.handle_fog_block(repair=False)
                 self.globe_goto(prev, types='STRONGHOLD')
                 continue
 
@@ -710,12 +741,107 @@ class OperationSiren(OSMap):
         logger.critical('Unable to clear boss, fleets exhausted')
         return False
 
+    def get_adaptability(self):
+        adaptability = OCR_OS_ADAPTABILITY.ocr(self.device.image)
+
+        return adaptability
+
+    def clear_month_boss(self):
+        """
+        check adaptability
+        check current boss difficulty
+        clear boss
+        repair fleets in port
+
+        Raises:
+            ActionPointLimit
+            TaskEnd: if no more month boss
+        """
+        logger.hr("OS clear Month Boss", level=1)
+
+        logger.hr("Month Boss precheck", level=2)
+        self.os_mission_enter()
+        logger.attr('OpsiMonthBoss.Mode', self.config.OpsiMonthBoss_Mode)
+        if self.appear(OS_MONTHBOSS_NORMAL, offset=(20, 20)):
+            logger.attr('Month boss difficulty', 'normal')
+            is_normal = True
+        elif self.appear(OS_MONTHBOSS_HARD, offset=(20, 20)):
+            logger.attr('Month boss difficulty', 'hard')
+            is_normal = False
+        else:
+            logger.info("No Normal/Hard boss found, stop")
+            self.os_mission_quit()
+            self.month_boss_delay(is_normal=False, result=True)
+            return True
+        self.os_mission_quit()
+
+        if not is_normal and self.config.OpsiMonthBoss_Mode == "normal":
+            logger.info("Attack normal boss only but having hard boss, skip")
+            self.month_boss_delay(is_normal=False, result=True)
+            self.config.task_stop()
+            return True
+
+        if self.config.OpsiMonthBoss_CheckAdaptability:
+            self.os_map_goto_globe(unpin=False)
+            adaptability = self.get_adaptability()
+            if (np.array(adaptability) < (203, 203, 156)).any():
+                logger.info("Adaptability is lower than suppression level, get stronger and come back")
+                self.config.task_delay(server_update=True)
+                self.config.task_stop()
+            # No need to exit, reuse
+            # self.os_globe_goto_map()
+
+        # combat
+        logger.hr("Month Boss goto", level=2)
+        self.globe_goto(154)
+        self.go_month_boss_room(is_normal=is_normal)
+        result = self.boss_clear(has_fleet_step=True, is_month=True)
+
+        # end
+        logger.hr("Month Boss repair", level=2)
+        self.fleet_repair(revert=False)
+        self.handle_fleet_resolve(revert=False)
+        self.month_boss_delay(is_normal=is_normal, result=result)
+
+    def month_boss_delay(self, is_normal=True, result=True):
+        """
+        Args:
+            is_normal: True for normal, False for hard
+            result: If success to clear boss
+        """
+        if is_normal:
+            if result:
+                if self.config.OpsiMonthBoss_Mode == 'normal_hard':
+                    logger.info('Monthly boss normal cleared, run hard boss then')
+                    self.config.task_stop()
+                else:
+                    logger.info('Monthly boss normal cleared, task stop')
+                    next_reset = get_os_next_reset()
+                    self.config.task_delay(target=next_reset)
+                    self.config.task_stop()
+            else:
+                logger.info("Unable to clear the normal monthly boss, will try later")
+                self.config.opsi_task_delay(recon_scan=False, submarine_call=True, ap_limit=False)
+                self.config.task_stop()
+        else:
+            if result:
+                logger.info('Monthly boss hard cleared, task stop')
+                next_reset = get_os_next_reset()
+                self.config.task_delay(target=next_reset)
+                self.config.task_stop()
+            else:
+                logger.info("Unable to clear the hard monthly boss, task stop")
+                self.config.task_stop()
+
 
 if __name__ == '__main__':
-    self = OperationSiren('alas', task='OpsiStronghold')
+    self = OperationSiren('month_test', task='OpsiMonthBoss')
     from module.os.config import OSConfig
 
     self.config = self.config.merge(OSConfig())
+
     self.device.screenshot()
-    self.zone_init()
-    self.run_stronghold()
+    self.os_init()
+
+    logger.hr("OS clear Month Boss", level=1)
+    self.clear_month_boss()

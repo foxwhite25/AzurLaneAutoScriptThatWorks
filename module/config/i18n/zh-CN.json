@@ -222,6 +222,10 @@
       "name": "塞壬要塞",
       "help": ""
     },
+    "OpsiMonthBoss": {
+      "name": "月度Boss",
+      "help": ""
+    },
     "OpsiMeowfficerFarming": {
       "name": "短猫相接",
       "help": ""
@@ -390,7 +394,8 @@
       "uiautomator2": "uiautomator2",
       "aScreenCap": "aScreenCap",
       "aScreenCap_nc": "aScreenCap_nc",
-      "DroidCast": "DroidCast"
+      "DroidCast": "DroidCast",
+      "scrcpy": "scrcpy"
     },
     "ControlMethod": {
       "name": "模拟器控制方案",
@@ -414,6 +419,14 @@
       "name": "重启模拟器",
       "help": ""
     },
+    "Enable": {
+      "name": "RestartEmulator.Enable.name",
+      "help": "RestartEmulator.Enable.help"
+    },
+    "EmulatorData": {
+      "name": "RestartEmulator.EmulatorData.name",
+      "help": "RestartEmulator.EmulatorData.help"
+    },
     "ErrorRestart": {
       "name": "出错时重启模拟器",
       "help": "在无法连接到模拟器时自动重启模拟器"
@@ -421,14 +434,6 @@
     "DailyRestart": {
       "name": "服务器刷新时重启模拟器",
       "help": "每天主动重启模拟器以解决内存泄漏问题"
-    },
-    "EmulatorType": {
-      "name": "模拟器类型",
-      "help": "Alas会根据手动填写的Serial寻找对应的模拟器\n如果被启动的模拟器需要管理员权限，请以管理员身份运行Alas\nMuMu模拟器不支持多开",
-      "auto": "自动",
-      "nox_player": "夜神模拟器32位",
-      "bluestacks_5": "蓝叠模拟器5",
-      "mumu_player": "MuMu模拟器"
     }
   },
   "Error": {
@@ -607,6 +612,8 @@
       "name": "活动名称",
       "help": "自动选择至最新的活动",
       "campaign_main": "主线图",
+      "event_20210610_tw": "復刻夜幕下的歸途",
+      "event_20210225_cn": "复刻破晓冰华",
       "event_20211229_cn": "逆转彩虹之塔",
       "event_20221222_cn": "定向折叠",
       "event_20221124_cn": "炼金术士与秘密遗迹群岛",
@@ -638,7 +645,6 @@
       "event_20220310_tw": "復刻斯圖爾特的硝煙",
       "event_20200603_cn": "复刻峡湾间的反击",
       "event_20220224_cn": "深度回音",
-      "event_20210225_cn": "破晓冰华",
       "event_20220210_cn": "复刻北境序曲",
       "raid_20220127": "演习神秘事件调查",
       "event_20211125_cn": "交汇世界的弧光",
@@ -649,7 +655,6 @@
       "event_20200723_cn": "永夜幻光",
       "event_20210624_cn": "复刻浮樱影华",
       "event_20210624_tw": "穹頂下的聖詠曲",
-      "event_20210610_tw": "夜幕下的歸途",
       "event_20210527_tw": "微層混合",
       "event_20210429_tw": "復刻墨染的鋼鐵之花",
       "event_20210415_tw": "復刻圍剿施佩伯爵",
@@ -843,7 +848,7 @@
     },
     "Mode": {
       "name": "潜艇出击方案",
-      "help": "提醒: '狩猎及BOSS战'为'仅狩猎'与'仅BOSS战'的混合，它会在道中进行狩猎打击，并在BOSS战尝试召唤潜艇。",
+      "help": "仅在自律寻敌关闭的情况下生效，提醒: '狩猎及BOSS战'为'仅狩猎'与'仅BOSS战'的混合，它会在道中进行狩猎打击，并在BOSS战尝试召唤潜艇。",
       "do_not_use": "不使用",
       "hunt_only": "仅狩猎",
       "boss_only": "仅BOSS战",
@@ -852,7 +857,7 @@
     },
     "AutoSearchMode": {
       "name": "潜艇自律方案",
-      "help": "自律时生效",
+      "help": "仅在自律寻敌下生效",
       "sub_standby": "待机",
       "sub_auto_call": "自动召唤潜艇"
     },
@@ -1183,10 +1188,10 @@
     "PresetFilter": {
       "name": "委托过滤器",
       "help": "如果对委托的产出和收益没有足够的了解，不建议编写自定义过滤器，建议使用预优化委托过滤器\n如果24小时运行刷紧急委托功能，应当使用（7x24刷委托）的过滤器\n不推荐在运行刷紧急委托功能的同时使用石油优先过滤器",
-      "chip": "钻石>心智>魔方",
-      "chip_24h": "钻石>心智>魔方（7x24刷委托）",
       "cube": "钻石>魔方>石油",
       "cube_24h": "钻石>魔方>石油（7x24刷委托）",
+      "chip": "钻石>心智>魔方",
+      "chip_24h": "钻石>心智>魔方（7x24刷委托）",
       "oil": "钻石>石油>魔方",
       "custom": "自定义"
     },
@@ -2138,6 +2143,26 @@
       "help": "开启后将带来额外的行动力消耗，一般不用打开，慢慢打就好"
     }
   },
+  "OpsiMonthBoss": {
+    "_info": {
+      "name": "月度Boss",
+      "help": "清理（简单/困难）月度boss，简单难度失败会继续出击直到击破，困难难度失败则直接终止任务\n使用此功能需要满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
+    },
+    "Mode": {
+      "name": "清理月度Boss的难度",
+      "help": "",
+      "normal": "简单",
+      "normal_hard": "简单 + 困难"
+    },
+    "CheckAdaptability": {
+      "name": "适应性在203/203/156以上才打BOSS",
+      "help": ""
+    },
+    "ForceRun": {
+      "name": "无视运行间隔强制运行",
+      "help": "开启后将带来额外的行动力消耗，一般不用打开，慢慢打就好"
+    }
+  },
   "OpsiMeowfficerFarming": {
     "_info": {
       "name": "短猫相接",
@@ -2145,7 +2170,7 @@
     },
     "ActionPointPreserve": {
       "name": "保留 X 点行动力",
-      "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留1000行动力给侵蚀1练级\n这个值将在大世界重置前3天自动减少至200点，如果启用侵蚀1练级则改为500点，并在最后一天自动减少至0点"
+      "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留1000行动力给侵蚀1练级\n这个值将在大世界重置前3天自动减少至200点，如果启用侵蚀1练级则改为1000点，并在最后一天自动减少至0点"
     },
     "HazardLevel": {
       "name": "侵蚀等级",
@@ -2235,10 +2260,6 @@
     },
     "MinitouchClick": {
       "name": "测试 minitouch 点击",
-      "help": ""
-    },
-    "HermitClick": {
-      "name": "测试 Hermit 点击",
       "help": ""
     }
   },

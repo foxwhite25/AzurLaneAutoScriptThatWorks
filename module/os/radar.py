@@ -118,7 +118,7 @@ class RadarGrid:
         """
         image = crop(self.image, area_offset(area, self.center))
         mask = color_similarity_2d(image, color=color) > threshold
-        return np.sum(mask) > count
+        return np.sum(mask) >= count
 
     def predict_enemy(self):
         return self.image_color_count(area=(-3, -3, 3, 3), color=(247, 89, 49), threshold=221, count=10)
@@ -136,10 +136,10 @@ class RadarGrid:
         return self.image_color_count(area=(-3, -3, 3, 3), color=(147, 12, 8), threshold=221, count=10)
 
     def predict_port(self):
-        return self.image_color_count(area=(-3, -3, 3, 3), color=(255, 255, 255), threshold=235, count=10)
+        return self.image_color_count(area=(-3, -3, 3, 3), color=(255, 255, 255), threshold=235, count=9)
 
     def predict_question(self):
-        return self.image_color_count(area=(0, -7, 6, 0), color=(255, 255, 255), threshold=235, count=10)
+        return self.image_color_count(area=(0, -7, 6, 0), color=(255, 255, 255), threshold=235, count=9)
 
     def predict_archive(self):
         return self.image_color_count(area=(-3, -3, 3, 3), color=(173, 113, 255), threshold=235, count=10)
@@ -233,6 +233,7 @@ class Radar:
         Returns:
             np.ndarray: Coordinate of the center of port icon, relative to radar center.
                 Such as [57.70732954 50.89636818].
+                Or None if port not found.
         """
         radius = (15, 82)
         image = crop(image, area_offset((-radius[1], -radius[1], radius[1], radius[1]), self.center))
@@ -241,10 +242,13 @@ class Radar:
         points = np.array(points).T[:, ::-1] - (radius[1], radius[1])
         distance = np.linalg.norm(points, axis=1)
         points = points[np.all([distance < radius[1], distance > radius[0]], axis=0)]
-        point = fit_points(points, mod=(1000, 1000), encourage=5)
-        point[point > 500] -= 1000
-        self.port_loca = point
-        return point
+        if len(points):
+            point = fit_points(points, mod=(1000, 1000), encourage=5)
+            point[point > 500] -= 1000
+            self.port_loca = point
+            return point
+        else:
+            return None
 
     def predict_port_inside(self, image):
         """
@@ -290,12 +294,20 @@ class Radar:
             image: Screenshot.
 
         Returns:
-            np.ndarray: Grid location of port on radar, or a grid location that can approach port.
+            np.ndarray: Grid location of port on radar,
+                or a grid location that can approach port,
+                or None if port not found.
         """
         port = self.predict_port_inside(image)
-        if port is None:
-            port = self.port_outside_to_inside(self.predict_port_outside(image))
-        return port
+        if port is not None:
+            return port
+
+        point = self.predict_port_outside(image)
+        if point is not None:
+            port = self.port_outside_to_inside(point)
+            return port
+
+        return None
 
     def predict_akashi(self, image):
         """

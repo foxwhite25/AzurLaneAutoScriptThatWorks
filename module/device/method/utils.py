@@ -54,6 +54,8 @@ def recv_all(stream, chunk_size=4096, recv_interval=0.000) -> bytes:
     if isinstance(stream, _AdbStreamConnection):
         stream = stream.conn
         stream.settimeout(10)
+    else:
+        stream.settimeout(10)
 
     try:
         fragments = []
@@ -84,6 +86,21 @@ def possible_reasons(*args):
 
 class PackageNotInstalled(Exception):
     pass
+
+
+def retry_sleep(trial):
+    # First trial
+    if trial == 0:
+        pass
+    # Failed once, fast retry
+    elif trial == 1:
+        pass
+    # Failed twice
+    elif trial == 2:
+        time.sleep(1)
+    # Failed more
+    else:
+        time.sleep(RETRY_DELAY)
 
 
 def handle_adb_error(e):
@@ -210,14 +227,25 @@ class IniterNoMinicap(u2.init.Initer):
     @property
     def minicap_urls(self):
         """
+        Don't install minicap on emulators, return empty urls.
+
         binary from https://github.com/openatx/stf-binaries
         only got abi: armeabi-v7a and arm64-v8a
         """
         return []
 
 
-# Monkey patch, don't install minicap on emulators
+class Device(u2.Device):
+    def show_float_window(self, show=True):
+        """
+        Don't show float windows.
+        """
+        pass
+
+
+# Monkey patch
 u2.init.Initer = IniterNoMinicap
+u2.Device = Device
 
 
 class HierarchyButton:

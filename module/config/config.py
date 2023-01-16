@@ -274,7 +274,8 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
 
         limit_next_run(["Commission", "Reward"], limit=now + timedelta(hours=12, seconds=-1))
         limit_next_run(["Research"], limit=now + timedelta(hours=24, seconds=-1))
-        limit_next_run(["OpsiExplore", "OpsiCrossMonth", "OpsiVoucher"], limit=now + timedelta(days=31, seconds=-1))
+        limit_next_run(["OpsiExplore", "OpsiCrossMonth", "OpsiVoucher", "OpsiMonthBoss"],
+                       limit=now + timedelta(days=31, seconds=-1))
         limit_next_run(["OpsiArchive"], limit=now + timedelta(days=7, seconds=-1))
         limit_next_run(self.args.keys(), limit=now + timedelta(hours=24, seconds=-1))
 
@@ -401,7 +402,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                 "Missing argument in delay_next_run, should set at least one"
             )
 
-    def opsi_task_delay(self, recon_scan=False, submarine_call=False, ap_limit=False):
+    def opsi_task_delay(self, recon_scan=False, submarine_call=False, ap_limit=False, cl1_preserve=False):
         """
         Delay the NextRun of all OpSi tasks.
 
@@ -409,14 +410,16 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             recon_scan (bool): True to delay all tasks requiring recon scan 27 min.
             submarine_call (bool): True to delay all tasks requiring submarine call 60 min.
             ap_limit (bool): True to delay all tasks requiring action points 360 min.
+            cl1_preserve (bool): True to delay tasks requiring massive action points 360 min.
         """
-        if not recon_scan and not submarine_call and not ap_limit:
+        if not recon_scan and not submarine_call and not ap_limit and not cl1_preserve:
             return None
         kv = dict_to_kv(
             {
                 "recon_scan": recon_scan,
                 "submarine_call": submarine_call,
                 "ap_limit": ap_limit,
+                "cl1_preserve": cl1_preserve,
             }
         )
 
@@ -475,6 +478,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                     "OpsiArchive",
                     "OpsiStronghold",
                     "OpsiMeowfficerFarming",
+                    "OpsiMonthBoss",
                 ]
             )
             tasks = tasks.filter(is_submarine_call).delete(tasks.filter(is_force_run))
@@ -495,6 +499,16 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             else:
                 logger.info("Just less than 1 day to OpSi reset, delay 2.5 hours")
                 delay_tasks(tasks, minutes=150)
+        if cl1_preserve:
+            tasks = SelectedGrids(
+                [
+                    "OpsiObscure",
+                    "OpsiAbyssal",
+                    "OpsiStronghold",
+                    "OpsiMeowfficerFarming",
+                ]
+            )
+            delay_tasks(tasks, minutes=360)
 
         self.update()
 
