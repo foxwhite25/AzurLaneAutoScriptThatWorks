@@ -10,7 +10,7 @@ from cached_property import cached_property
 
 from deploy.config import DeployConfig
 from module.base.timer import Timer
-from module.config.utils import read_file, deep_get
+from module.config.utils import read_file, deep_get, get_server_last_update
 from module.device.connection_attr import ConnectionAttr
 from module.exception import RequestHumanTakeover
 from module.logger import logger
@@ -77,6 +77,8 @@ class AssistantHandler:
                 return
 
     def maa_start(self, task_name, params):
+        logger.hr('MAA start')
+        logger.info(f'Task name: {task_name}, params={params}')
         self.task_id = self.asst.append_task(task_name, params)
         self.signal = None
         self.params = params
@@ -204,6 +206,9 @@ class AssistantHandler:
 
     def startup(self):
         self.connect()
+        if self.config.Scheduler_NextRun.strftime('%H:%M') == self.config.Scheduler_ServerUpdate:
+            self.maa_start('CloseDown', {})
+
         self.maa_start('StartUp', {
             "client_type": self.config.MaaEmulator_PackageName,
             "start_game_enabled": True
@@ -216,12 +221,20 @@ class AssistantHandler:
             "client_type": self.config.MaaEmulator_PackageName,
             "DrGrandet": self.config.MaaFight_DrGrandet,
         }
+        # Set stage
         if self.config.MaaFight_Stage == 'last':
             args['stage'] = ''
         elif self.config.MaaFight_Stage == 'custom':
             args['stage'] = self.config.MaaFight_CustomStage
         else:
             args['stage'] = self.config.MaaFight_Stage
+        # Set weekly stage
+        today = get_server_last_update('04:00').strftime('%A')
+        logger.attr('Weekday', today)
+        stage = self.config.__getattribute__(f'MaaFightWeekly_{today}')
+        if stage != 'default':
+            logger.info(f'Using stage setting from {today}: {stage}')
+            args['stage'] = stage
 
         if self.config.MaaFight_Medicine is not None:
             args["medicine"] = self.config.MaaFight_Medicine
@@ -304,12 +317,14 @@ class AssistantHandler:
         self.config.task_delay(success=True)
 
     def infrast(self):
+        # Todo: drom_trust_enabled已经在新版本中改为dorm_trust_enabled，需要在正式版更新之后删除
         args = {
             "facility": self.split_filter(self.config.MaaInfrast_Facility),
             "drones": self.config.MaaInfrast_Drones,
             "threshold": self.config.MaaInfrast_Threshold,
             "replenish": self.config.MaaInfrast_Replenish,
             "dorm_notstationed_enabled": self.config.MaaInfrast_Notstationed,
+            "dorm_trust_enabled": self.config.MaaInfrast_Trust,
             "drom_trust_enabled": self.config.MaaInfrast_Trust
         }
 
@@ -422,8 +437,36 @@ class AssistantHandler:
             logger.critical('作业文件不存在或已经损坏')
             raise RequestHumanTakeover
 
-        self.maa_start('Copilot', {
-            "stage_name": stage,
-            "filename": filename,
-            "formation": self.config.MaaCopilot_Formation
-        })
+        if self.config.MaaCopilot_Identify:
+            logger.info(deep_get(homework, keys='doc.title', default='标题：无') + '\n')
+            logger.info('\n' + deep_get(homework, keys='doc.details', default='内容：无') + '\n')
+            if deep_get(homework, keys='type') == 'SSS':
+                out = '\n'
+                opers = deep_get(homework, keys='opers')
+                if opers:
+                    out += '核心干员：\n'
+                    for oper in opers:
+                        out += f'{oper["name"]}，{oper["skill"]}技能\n'
+                    out += '\n'
+
+                tool_men = deep_get(homework, keys='tool_men')
+                if tool_men:
+                    out += f'工具人：{tool_men}\n\n'
+
+                equipment = deep_get(homework, keys='equipment')
+                if equipment:
+                    out += f'战术装备（横向）：{equipment}\n\n'
+
+                logger.info(out)
+            return
+
+        args = {
+                "stage_name": stage,
+                "filename": filename,
+                "formation": self.config.MaaCopilot_Formation
+            }
+        for i in range(self.config.MaaCopilot_Cycle):
+            if deep_get(homework, keys='type') == 'SSS':
+                self.maa_start('SSSCopilot', args)
+            else:
+                self.maa_start('Copilot', args)

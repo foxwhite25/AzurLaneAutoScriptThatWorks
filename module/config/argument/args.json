@@ -108,6 +108,7 @@
           "aScreenCap",
           "aScreenCap_nc",
           "DroidCast",
+          "DroidCast_raw",
           "scrcpy"
         ]
       },
@@ -5122,17 +5123,18 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "raid_20220127",
+          "raid_20230118",
           "raid_20221027",
           "raid_20220630",
           "raid_20210708",
-          "raid_20200624",
-          "raid_20220127"
+          "raid_20200624"
         ],
         "display": "disabled",
-        "cn": "raid_20221027",
-        "en": "raid_20221027",
-        "jp": "raid_20221027",
-        "tw": "raid_20210708"
+        "tw": "raid_20220127",
+        "cn": "raid_20230118",
+        "en": "raid_20230118",
+        "jp": "raid_20230118"
       },
       "Mode": {
         "type": "select",
@@ -5343,17 +5345,18 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "raid_20220127",
+          "raid_20230118",
           "raid_20221027",
           "raid_20220630",
           "raid_20210708",
-          "raid_20200624",
-          "raid_20220127"
+          "raid_20200624"
         ],
         "display": "disabled",
-        "cn": "raid_20221027",
-        "en": "raid_20221027",
-        "jp": "raid_20221027",
-        "tw": "raid_20210708"
+        "tw": "raid_20220127",
+        "cn": "raid_20230118",
+        "en": "raid_20230118",
+        "jp": "raid_20230118"
       },
       "Mode": {
         "type": "select",
@@ -8622,37 +8625,27 @@
   },
   "Benchmark": {
     "Benchmark": {
-      "AdbScreenshot": {
-        "type": "checkbox",
-        "value": true
+      "DeviceType": {
+        "type": "select",
+        "value": "emulator",
+        "option": [
+          "emulator",
+          "emulator_android_12",
+          "plone_cloud_with_adb",
+          "phone_cloud_without_adb",
+          "android_phone",
+          "android_phone_12",
+          "android_phone_vmos"
+        ]
       },
-      "AdbncScreenshot": {
-        "type": "checkbox",
-        "value": true
-      },
-      "Uiautomator2Screenshot": {
-        "type": "checkbox",
-        "value": true
-      },
-      "AscreencapScreenshot": {
-        "type": "checkbox",
-        "value": true
-      },
-      "AscreencapncScreenshot": {
-        "type": "checkbox",
-        "value": true
-      },
-      "AdbClick": {
-        "type": "checkbox",
-        "value": true
-      },
-      "Uiautomator2Click": {
-        "type": "checkbox",
-        "value": true
-      },
-      "MinitouchClick": {
-        "type": "checkbox",
-        "value": true
+      "TestScene": {
+        "type": "select",
+        "value": "screenshot_click",
+        "option": [
+          "screenshot_click",
+          "screenshot",
+          "click"
+        ]
       }
     },
     "Storage": {

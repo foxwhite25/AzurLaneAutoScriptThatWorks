@@ -103,6 +103,15 @@
       "Drops": null,
       "DrGrandet": false
     },
+    "MaaFightWeekly": {
+      "Monday": "default",
+      "Tuesday": "default",
+      "Wednesday": "default",
+      "Thursday": "default",
+      "Friday": "default",
+      "Saturday": "default",
+      "Sunday": "default"
+    },
     "Storage": {
       "Storage": {}
     }
@@ -214,7 +223,9 @@
   "MaaCopilot": {
     "MaaCopilot": {
       "FileName": null,
-      "Formation": false
+      "Identify": false,
+      "Formation": false,
+      "Cycle": 1
     },
     "Storage": {
       "Storage": {}

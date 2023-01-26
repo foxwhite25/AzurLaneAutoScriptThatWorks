@@ -395,6 +395,7 @@
       "aScreenCap": "aScreenCap",
       "aScreenCap_nc": "aScreenCap_nc",
       "DroidCast": "DroidCast",
+      "DroidCast_raw": "DroidCast_raw",
       "scrcpy": "scrcpy"
     },
     "ControlMethod": {
@@ -612,6 +613,8 @@
       "name": "活動名稱",
       "help": "自動選擇至最新的活動圖",
       "campaign_main": "主線圖",
+      "raid_20220127": "演習神秘事件調查",
+      "raid_20230118": "Winter Pathfinder",
       "event_20210610_tw": "復刻夜幕下的歸途",
       "event_20210225_cn": "破曉冰華",
       "event_20211229_cn": "逆轉彩虹之塔",
@@ -646,7 +649,6 @@
       "event_20200603_cn": "峽灣間的反擊",
       "event_20220224_cn": "Abyssal Refrain",
       "event_20220210_cn": "Northern Overture Rerun",
-      "raid_20220127": "Mystery Investigation",
       "event_20211125_cn": "交匯世界的弧光",
       "event_20211028_tw": "復刻光與影的鳶尾之華",
       "event_20210722_cn": "響徹碧海的偶像歌",
@@ -2228,39 +2230,25 @@
   "Benchmark": {
     "_info": {
       "name": "性能測試",
-      "help": "測試哪個截圖方案和點擊方案速度更快，速度因模擬器和電腦配置而異"
+      "help": "測試哪個截圖方案和控制方案速度更快，速度因模擬器和電腦配置而異\n測試完成後，在 \"Alas\" - \"模擬器設置\" 內選擇最快的截圖和控制方案"
     },
-    "AdbScreenshot": {
-      "name": "測試 ADB 截圖",
-      "help": ""
+    "DeviceType": {
+      "name": "設備類型",
+      "help": "",
+      "emulator": "模擬器 安卓<=9",
+      "emulator_android_12": "模擬器 安卓>9",
+      "plone_cloud_with_adb": "雲手機 有公網ADB",
+      "phone_cloud_without_adb": "雲手機 無公網ADB",
+      "android_phone": "安卓真機 安卓<=9",
+      "android_phone_12": "安卓真機 安卓>9",
+      "android_phone_vmos": "安卓真機VMOS虛擬機"
     },
-    "AdbncScreenshot": {
-      "name": "測試 ADB 截圖",
-      "help": ""
-    },
-    "Uiautomator2Screenshot": {
-      "name": "測試 uiautomator2 截圖",
-      "help": ""
-    },
-    "AscreencapScreenshot": {
-      "name": "測試 aScreenCap 截圖",
-      "help": ""
-    },
-    "AscreencapncScreenshot": {
-      "name": "測試 aScreenCap_nc 截圖",
-      "help": ""
-    },
-    "AdbClick": {
-      "name": "測試 ADB 點擊",
-      "help": ""
-    },
-    "Uiautomator2Click": {
-      "name": "測試 uiautomator2 點擊",
-      "help": ""
-    },
-    "MinitouchClick": {
-      "name": "測試 minitouch 點擊",
-      "help": ""
+    "TestScene": {
+      "name": "測試場景",
+      "help": "",
+      "screenshot_click": "截圖+點擊速度測試",
+      "screenshot": "截圖速度測試",
+      "click": "點擊速度測試"
     }
   },
   "AzurLaneUncensored": {
