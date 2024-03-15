@@ -7,10 +7,10 @@ from module.base.timer import Timer
 from module.combat.assets import PAUSE
 from module.config.utils import get_os_reset_remain
 from module.exception import CampaignEnd, RequestHumanTakeover
-from module.exception import GameTooManyClickError, GameStuckError
+from module.exception import GameTooManyClickError
 from module.exception import MapWalkError, ScriptError
 from module.exercise.assets import QUIT_CONFIRM, QUIT_RECONFIRM
-from module.handler.login import LoginHandler
+from module.handler.login import LoginHandler, MAINTENANCE_ANNOUNCE
 from module.logger import logger
 from module.map.map import Map
 from module.os.assets import FLEET_EMP_DEBUFF, MAP_GOTO_GLOBE_FOG
@@ -19,7 +19,6 @@ from module.os.globe_camera import GlobeCamera
 from module.os.globe_operation import RewardUncollectedError
 from module.os_handler.assets import AUTO_SEARCH_OS_MAP_OPTION_OFF, \
     AUTO_SEARCH_OS_MAP_OPTION_ON, AUTO_SEARCH_REWARD
-from module.os_handler.shop import OCR_SHOP_YELLOW_COINS
 from module.os_handler.strategic import StrategicSearchHandler
 from module.ui.assets import GOTO_MAIN
 from module.ui.page import page_main, page_os
@@ -52,6 +51,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         self.config.override(
             Submarine_Fleet=1,
             Submarine_Mode='every_combat',
+            STORY_ALLOW_SKIP=False,
             **kwargs
         )
 
@@ -138,9 +138,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         if self.is_in_map():
             self.os_map_goto_globe()
         # IN_GLOBE
-        if not self.is_in_globe():
-            logger.warning('Trying to move in globe, but not in os globe map')
-            raise GameStuckError
         # self.ensure_no_zone_pinned()
         self.globe_update()
         self.globe_focus_to(zone)
@@ -177,7 +174,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         logger.error('Failed to solve uncollected rewards')
         raise GameTooManyClickError
 
-    def port_goto(self):
+    def port_goto(self, allow_port_arrive=True):
         """
         Wraps `port_goto()`, handle walk_out_of_step
 
@@ -186,15 +183,22 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         """
         for _ in range(3):
             try:
-                super().port_goto()
+                super().port_goto(allow_port_arrive=allow_port_arrive)
                 return True
             except MapWalkError:
                 pass
 
             logger.info('Goto another port then re-enter')
             prev = self.zone
-            self.globe_goto(self.zone_nearest_azur_port(self.zone))
+            if prev == self.name_to_zone('NY City'):
+                other = self.name_to_zone('Liverpool')
+            else:
+                other = self.zone_nearest_azur_port(self.zone)
+            self.globe_goto(other)
             self.globe_goto(prev)
+
+        logger.warning('Failed to solve MapWalkError when going to port')
+        return False
 
     def fleet_repair(self, revert=True):
         """
@@ -355,7 +359,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
                     break
 
             logger.info('Solve EMP debuff by going somewhere else')
-            self.port_goto()
+            self.port_goto(allow_port_arrive=False)
             self.fleet_set(current)
 
         logger.warning('Failed to solve EMP debuff after 5 trial, assume solved')
@@ -375,9 +379,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         if not self.appear(MAP_GOTO_GLOBE_FOG):
             return False
 
-        logger.warn('Triggered stuck fog status, restarting '
-                    'game to resolve and continue '
-                   f'{self.config.task.command}')
+        logger.warning(f'Triggered stuck fog status, restarting '
+                       f'game to resolve and continue '
+                       f'{self.config.task.command}')
 
         # Restart the game manually rather
         # than through 'task_call'
@@ -402,7 +406,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         """
         remain = get_os_reset_remain()
         if remain <= 0:
-            if self.config.cross_get('OpsiCrossMonth.Scheduler.Enable', default=False):
+            if self.config.is_task_enabled('OpsiCrossMonth'):
                 logger.info('Just less than 1 day to OpSi reset, OpsiCrossMonth is enabled'
                             'set OpsiMeowfficerFarming.ActionPointPreserve to 300 temporarily')
                 return 300
@@ -412,8 +416,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
                 return 0
         elif self.is_cl1_enabled and remain <= 2:
             logger.info('Just less than 3 days to OpSi reset, '
-                        'set ActionPointPreserve to 500 temporarily for hazard 1 leveling')
-            return 500
+                        'set ActionPointPreserve to 1000 temporarily for hazard 1 leveling')
+            return 1000
         elif remain <= 2:
             logger.info('Just less than 3 days to OpSi reset, '
                         'set ActionPointPreserve to 300 temporarily')
@@ -429,38 +433,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         solved |= self.handle_fleet_repair(revert=False)
         logger.info(f'Handle after auto search finished, solved={solved}')
         return solved
-
-    @property
-    def is_in_task_explore(self):
-        return self.config.task.command == 'OpsiExplore'
-
-    @property
-    def is_cl1_enabled(self):
-        return self.config.cross_get('OpsiHazard1Leveling.Scheduler.Enable', default=False)
-
-    def get_yellow_coins(self, skip_first_screenshot=True):
-        """
-        Returns:
-            int:
-        """
-        timeout = Timer(2, count=3).start()
-        while 1:
-            if skip_first_screenshot:
-                skip_first_screenshot = False
-            else:
-                self.device.screenshot()
-
-            yellow_coins = OCR_SHOP_YELLOW_COINS.ocr(self.device.image)
-            if timeout.reached():
-                logger.warning('Get yellow coins timeout')
-            if yellow_coins < 100:
-                # OCR may get 0 or 1 when amount is not immediately loaded
-                logger.info('Yellow coins less than 100, assuming it is an ocr error')
-                continue
-            else:
-                break
-
-        return yellow_coins
 
     def cl1_ap_preserve(self):
         """
@@ -483,7 +455,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
     def on_auto_search_battle_count_add(self):
         self._auto_search_battle_count += 1
         logger.attr('battle_count', self._auto_search_battle_count)
-        if self.config.task.command == 'OpsiHazard1Leveling':
+        if self.is_in_task_cl1_leveling:
             if self._auto_search_battle_count % 2 == 1:
                 if self._auto_search_round_timer:
                     cost = round(time.time() - self._auto_search_round_timer, 2)
@@ -564,28 +536,50 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
                 # Auto search can not handle siren searching device.
                 continue
 
-    def interrupt_auto_search(self):
+    def interrupt_auto_search(self, skip_first_screenshot=True):
         logger.info('Interrupting auto search')
+        is_loading = False
         while 1:
-            self.device.screenshot()
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            # End
+            if self.ui_page_appear(page_main):
+                logger.info('Auto search interrupted')
+                self.config.task_stop()
 
             if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=3):
                 continue
             if self.appear_then_click(PAUSE, interval=0.5):
+                self.interval_reset(MAINTENANCE_ANNOUNCE)
                 continue
             if self.appear_then_click(QUIT_CONFIRM, offset=(20, 20), interval=5):
+                self.interval_reset(MAINTENANCE_ANNOUNCE)
                 continue
             if self.appear_then_click(QUIT_RECONFIRM, offset=True, interval=5):
+                self.interval_reset(MAINTENANCE_ANNOUNCE)
                 continue
 
             if self.appear_then_click(GOTO_MAIN, offset=(20, 20), interval=3):
                 continue
             if self.ui_additional():
                 continue
-            # End
-            if self.ui_page_appear(page_main):
-                logger.info('Auto search interrupted')
-                self.config.task_stop()
+            if self.handle_map_event():
+                continue
+            # Only print once when detected
+            if not is_loading:
+                if self.is_combat_loading():
+                    is_loading = True
+                    continue
+                if self.handle_battle_status():
+                    continue
+                if self.handle_exp_info():
+                    continue
+            elif self.is_combat_executing():
+                is_loading = False
+                continue
 
     def os_auto_search_run(self, drop=None, strategic=False):
         for _ in range(5):
@@ -601,7 +595,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
 
             # Continue if was Auto search interrupted by ash popup
             # Break if zone cleared
-            if self.config.OpsiAshBeacon_AshAttack:
+            if self.config.is_task_enabled('OpsiAshBeacon'):
                 if self.handle_ash_beacon_attack() or self.ash_popup_canceled:
                     strategic = False
                     continue
@@ -628,7 +622,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         """
         logger.hr('Clear question', level=2)
         for _ in range(3):
-            grid = self.radar.predict_question(self.device.image)
+            grid = self.radar.predict_question(self.device.image, in_port=self.zone.is_port)
             if grid is None:
                 logger.info('No question mark above current fleet on this radar')
                 return False
@@ -642,7 +636,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
 
             grid = self.convert_radar_to_local(grid)
             self.device.click(grid)
-            result = self.wait_until_walk_stable(drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
+            with self.config.temporary(STORY_ALLOW_SKIP=False):
+                result = self.wait_until_walk_stable(
+                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
             if 'akashi' in result:
                 self._solved_map_event.add('is_akashi')
                 return True
@@ -669,9 +665,11 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         Args:
             question (bool):
                 If clear nearing questions after auto search.
-            rescan (bool): Whether to rescan the whole map after running auto search.
+            rescan (bool, str): Whether to rescan the whole map after running auto search.
                 This will clear siren scanning devices, siren logging tower,
                 visit akashi's shop that auto search missed, and unlock mechanism that requires 2 fleets.
+                Accept str also, `current` to scan current camera only,
+                `full` to scan current then rescan the whole map
 
                 This option should be disabled in special tasks like OpsiObscure, OpsiAbyssal, OpsiStronghold.
             after_auto_search (bool):
@@ -679,6 +677,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         """
         if rescan is None:
             rescan = self.config.OpsiGeneral_DoRandomMapEvent
+        if rescan is True:
+            rescan = 'full'
         self.handle_ash_beacon_attack()
 
         logger.info(f'Run auto search, question={question}, rescan={rescan}')
@@ -706,9 +706,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
             self._solved_map_event = set()
             self._solved_fleet_mechanism = False
             if question:
-                self.clear_question(drop)
+                self.clear_question(drop=drop)
             if rescan:
-                self.map_rescan(drop)
+                self.map_rescan(rescan_mode=rescan, drop=drop)
 
             if drop.count == 1:
                 drop.clear()
@@ -756,7 +756,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
             fleet = self.convert_radar_to_local((0, 0))
             if fleet.distance_to(grid) > 1:
                 self.device.click(grid)
-                result = self.wait_until_walk_stable(drop=drop, walk_out_of_step=False)
+                with self.config.temporary(STORY_ALLOW_SKIP=False):
+                    result = self.wait_until_walk_stable(drop=drop, walk_out_of_step=False)
                 if 'akashi' in result:
                     self._solved_map_event.add('is_akashi')
                     return True
@@ -772,9 +773,15 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         if 'is_scanning_device' not in self._solved_map_event and grids and grids[0].is_scanning_device:
             grid = grids[0]
             logger.info(f'Found scanning device on {grid}')
+            if self.is_in_task_cl1_leveling:
+                logger.info('In CL1 leveling, mark scanning device as solved')
+                self._solved_map_event.add('is_scanning_device')
+                return True
+
             self.device.click(grid)
-            result = self.wait_until_walk_stable(drop=drop, walk_out_of_step=False,
-                                                 confirm_timer=Timer(1.5, count=4))
+            with self.config.temporary(STORY_ALLOW_SKIP=False):
+                result = self.wait_until_walk_stable(
+                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
             self.os_auto_search_run(drop=drop)
             if 'event' in result:
                 self._solved_map_event.add('is_scanning_device')
@@ -787,7 +794,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
             grid = grids[0]
             logger.info(f'Found logging tower on {grid}')
             self.device.click(grid)
-            result = self.wait_until_walk_stable(drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
+            with self.config.temporary(STORY_ALLOW_SKIP=False):
+                result = self.wait_until_walk_stable(
+                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
             if 'event' in result:
                 self._solved_map_event.add('is_logging_tower')
                 return True
@@ -817,35 +826,46 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         logger.info(f'No map event')
         return False
 
-    def map_rescan_once(self, drop=None):
+    def map_rescan_once(self, rescan_mode='full', drop=None):
         """
         Args:
+            rescan_mode (str): `current` to scan current camera only,
+                `full` to scan current then rescan the whole map
             drop:
 
         Returns:
             bool: If solved a map random event
         """
-        logger.hr('Map rescan once', level=2)
-        self.handle_info_bar()
-        self.map_init(map_=None)
         result = False
 
-        queue = self.map.camera_data
-        while len(queue) > 0:
-            logger.hr(f'Map rescan {queue[0]}')
-            queue = queue.sort_by_camera_distance(self.camera)
-            self.focus_to(queue[0], swipe_limit=(6, 5))
-            self.focus_to_grid_center(0.25)
+        # Try current camera first
+        logger.hr('Map rescan current', level=2)
+        self.map_data_init(map_=None)
+        self.handle_info_bar()
+        self.update()
+        if self.map_rescan_current(drop=drop):
+            logger.info(f'Map rescan once end, result={True}')
+            return True
 
-            if self.map_rescan_current(drop=drop):
-                result = True
-                break
-            queue = queue[1:]
+        if rescan_mode == 'full':
+            logger.hr('Map rescan full', level=2)
+            self.map_init(map_=None)
+            queue = self.map.camera_data
+            while len(queue) > 0:
+                logger.hr(f'Map rescan {queue[0]}')
+                queue = queue.sort_by_camera_distance(self.camera)
+                self.focus_to(queue[0], swipe_limit=(6, 5))
+                self.focus_to_grid_center(0.25)
+
+                if self.map_rescan_current(drop=drop):
+                    result = True
+                    break
+                queue = queue[1:]
 
         logger.info(f'Map rescan once end, result={result}')
         return result
 
-    def map_rescan(self, drop=None):
+    def map_rescan(self, rescan_mode='full', drop=None):
         if self.zone.is_port:
             logger.info('Current zone is a port, do not need rescan')
             return False
@@ -860,7 +880,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
                 logger.attr('Solved_map_event', self._solved_map_event)
                 self.fleet_set(self.config.OpsiFleet_Fleet)
                 return False
-            result = self.map_rescan_once(drop=drop)
+            result = self.map_rescan_once(rescan_mode=rescan_mode, drop=drop)
             if not result:
                 logger.attr('Solved_map_event', self._solved_map_event)
                 self.fleet_set(self.config.OpsiFleet_Fleet)

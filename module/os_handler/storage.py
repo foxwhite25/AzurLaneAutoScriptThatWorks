@@ -2,6 +2,7 @@ from module.base.timer import Timer
 from module.base.utils import rgb2gray
 from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2
 from module.exception import ScriptError
+from module.handler.assets import GET_MISSION
 from module.logger import logger
 from module.os.globe_operation import GlobeOperation
 from module.os.globe_zone import ZoneManager
@@ -15,14 +16,29 @@ class StorageHandler(GlobeOperation, ZoneManager):
     def is_in_storage(self):
         return self.appear(STORAGE_CHECK, offset=(20, 20))
 
-    def storage_enter(self):
+    def storage_enter(self, skip_first_screenshot=True):
         """
         Pages:
             in: is_in_map, STORAGE_ENTER
             out: STORAGE_CHECK
         """
-        self.ui_click(STORAGE_ENTER, check_button=self.is_in_storage,
-                      retry_wait=3, offset=(200, 5), skip_first_screenshot=True)
+        logger.info('Storage enter')
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            # End
+            if self.is_in_storage():
+                break
+
+            if self.appear_then_click(STORAGE_ENTER, offset=(200, 5), interval=3):
+                continue
+            # A game bug that AUTO_SEARCH_REWARD from the last cleared zone popups
+            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=3):
+                continue
+
         self.handle_info_bar()
 
     def storage_quit(self):
@@ -31,6 +47,7 @@ class StorageHandler(GlobeOperation, ZoneManager):
             in: STORAGE_CHECK
             out: is_in_map
         """
+        logger.info('Storage quit')
         self.ui_back(STORAGE_ENTER, offset=(200, 5), skip_first_screenshot=True)
 
     def _storage_item_use(self, button, skip_first_screenshot=True):
@@ -44,11 +61,13 @@ class StorageHandler(GlobeOperation, ZoneManager):
             out: STORAGE_CHECK
         """
         success = False
+        get_mission_counter = 0
         self.interval_clear(STORAGE_CHECK)
         self.interval_clear(STORAGE_USE)
         self.interval_clear(GET_ITEMS_1)
         self.interval_clear(GET_ITEMS_2)
         self.interval_clear(GET_ADAPTABILITY)
+        self.interval_clear(GET_MISSION)
 
         while 1:
             if skip_first_screenshot:
@@ -56,9 +75,17 @@ class StorageHandler(GlobeOperation, ZoneManager):
             else:
                 self.device.screenshot()
 
-            if self.appear(STORAGE_CHECK, offset=(20, 20), interval=5):
-                self.device.click(button)
+            # Accidentally clicked on an item, having popups for its info
+            if self.appear(GET_MISSION, offset=True, interval=2):
+                logger.info(f'_storage_item_use item info -> {GET_MISSION}')
+                self.device.click(GET_MISSION)
+                self.interval_reset(STORAGE_CHECK)
+                get_mission_counter += 1
+                if get_mission_counter >= 3:
+                    logger.warning('Possibly stuck on energy storage device, redetecting logger items.')
+                    break
                 continue
+            # Item rewards
             if self.appear_then_click(STORAGE_USE, offset=(180, 30), interval=5):
                 self.interval_reset(STORAGE_CHECK)
                 continue
@@ -73,6 +100,10 @@ class StorageHandler(GlobeOperation, ZoneManager):
             if self.appear(GET_ADAPTABILITY, offset=5, interval=2):
                 self.device.click(CLICK_SAFE_AREA)
                 success = True
+                continue
+            # Use item
+            if self.appear(STORAGE_CHECK, offset=(20, 20), interval=5):
+                self.device.click(button)
                 continue
 
             # End

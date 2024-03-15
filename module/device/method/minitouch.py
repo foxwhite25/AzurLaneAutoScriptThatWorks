@@ -74,7 +74,7 @@ def insert_swipe(p0, p3, speed=15, min_distance=10):
     prev = (-100, -100)
     for t in ts:
         point = p0 * (1 - t) ** 3 + 3 * p1 * t * (1 - t) ** 2 + 3 * p2 * t ** 2 * (1 - t) + p3 * t ** 3
-        point = point.astype(np.int).tolist()
+        point = point.astype(int).tolist()
         if np.linalg.norm(np.subtract(point, prev)) < min_distance:
             continue
 
@@ -184,18 +184,26 @@ class CommandBuilder:
     max_x = 1280
     max_y = 720
 
-    def __init__(self, device):
+    def __init__(self, device, handle_orientation=True):
         """
         Args:
-            device (Minitouch):
+            device:
         """
         self.device = device
         self.commands = []
         self.delay = 0
+        self.handle_orientation = handle_orientation
+
+    @property
+    def orientation(self):
+        if self.handle_orientation:
+            return self.device.orientation
+        else:
+            return 0
 
     def convert(self, x, y):
         max_x, max_y = self.device.max_x, self.device.max_y
-        orientation = self.device.orientation
+        orientation = self.orientation
 
         if orientation == 0:
             pass

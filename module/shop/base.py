@@ -1,23 +1,29 @@
 import re
 
-from module.base.base import ModuleBase
 from module.base.button import ButtonGrid
 from module.base.decorator import cached_property
 from module.base.filter import Filter
 from module.base.timer import Timer
-from module.combat.assets import GET_ITEMS_1, GET_SHIP
+from module.combat.assets import GET_ITEMS_1, GET_ITEMS_3, GET_SHIP
 from module.logger import logger
 from module.shop.assets import *
 from module.shop.shop_select_globals import *
 from module.statistics.item import ItemGrid
 from module.tactical.tactical_class import Book
+from module.ui.ui import UI
 
 FILTER_REGEX = re.compile(
     '^(array|book|box|bulin|cat'
     '|chip|coin|cube|drill|food'
     '|plate|retrofit|pr|dr'
     '|logger|tuning'
-    '|hecombatplan)'
+    '|hecombatplan|fragment'
+    '|albacore|bataan|bearn|bluegill|carabiniere|casablanca|contedicavour|dukeofyork'
+    '|echo|eldridge|gangut|glorious|grenville|hibiki|hunter|icarus'
+    '|kawakaze|kinggeorgev|kinu|kuroshio|lagalissonniere|lemalinmuse|letemeraire|littorio'
+    '|mikuma|minsk|newcastle|oyashio|quincy|ryuujou|sanjuan|sheffieldmuse'
+    '|trento|u37|vincennes|z24|z26|z28|z36'
+    ')'
 
     '(neptune|monarch|ibuki|izumo|roon|saintlouis'
     '|seattle|georgia|kitakaze|azuma|friedrich'
@@ -27,6 +33,7 @@ FILTER_REGEX = re.compile(
     '|red|blue|yellow'
     '|general|gun|torpedo|antiair|plane|wild'
     '|dd|cl|bb|cv'
+    '|iris'
     '|abyssal|archive|obscure|unlock'
     '|combat|offense|survival)?'
 
@@ -79,7 +86,7 @@ class ShopItemGrid(ItemGrid):
         return self.items
 
 
-class ShopBase(ModuleBase):
+class ShopBase(UI):
     _currency = 0
     shop_template_folder = ''
 
@@ -98,7 +105,7 @@ class ShopBase(ModuleBase):
             ButtonGrid:
         """
         shop_grid = ButtonGrid(
-            origin=(477, 152), delta=(156, 214), button_shape=(96, 96), grid_shape=(5, 2), name='SHOP_GRID')
+            origin=(476, 246), delta=(156, 213), button_shape=(98, 98), grid_shape=(5, 2), name='SHOP_GRID')
         return shop_grid
 
     def shop_items(self):
@@ -184,9 +191,18 @@ class ShopBase(ModuleBase):
         """
         # Handle shop obstructions
         if self.appear(GET_SHIP, interval=1):
+            logger.info(f'Shop obstruct: {GET_SHIP} -> {SHOP_CLICK_SAFE_AREA}')
             self.device.click(SHOP_CLICK_SAFE_AREA)
             return True
+        # To lock new ships
+        if self.handle_popup_confirm('SHOP_OBSTRUCT'):
+            return True
         if self.appear(GET_ITEMS_1, interval=1):
+            logger.info(f'Shop obstruct: {GET_ITEMS_1} -> {SHOP_CLICK_SAFE_AREA}')
+            self.device.click(SHOP_CLICK_SAFE_AREA)
+            return True
+        if self.appear(GET_ITEMS_3, interval=1):
+            logger.info(f'Shop obstruct: {GET_ITEMS_3} -> {SHOP_CLICK_SAFE_AREA}')
             self.device.click(SHOP_CLICK_SAFE_AREA)
             return True
 
@@ -220,6 +236,13 @@ class ShopBase(ModuleBase):
             if self.shop_obstruct_handle():
                 timeout.reset()
                 continue
+
+            if self.config.SHOP_EXTRACT_TEMPLATE:
+                if self.shop_template_folder:
+                    logger.info(f'Extract item templates to {self.shop_template_folder}')
+                    shop_items.extract_template(self.device.image, self.shop_template_folder)
+                else:
+                    logger.warning('SHOP_EXTRACT_TEMPLATE enabled but shop_template_folder is not set, skip extracting')
 
             shop_items.predict(
                 self.device.image,

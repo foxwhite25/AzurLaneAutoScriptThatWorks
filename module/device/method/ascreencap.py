@@ -75,27 +75,30 @@ class AScreenCap(Connection):
     __screenshot_method = [0, 1, 2]
     __screenshot_method_fixed = [0, 1, 2]
     __bytepointer = 0
+    ascreencap_available = True
 
     def ascreencap_init(self):
         logger.hr('aScreenCap init')
         self.__bytepointer = 0
+        self.ascreencap_available = True
 
-        arc = self.adb_shell(['getprop', 'ro.product.cpu.abi'])
-        sdk = self.adb_shell(['getprop', 'ro.build.version.sdk'])
+        arc = self.cpu_abi
+        sdk = self.sdk_ver
         logger.info(f'cpu_arc: {arc}, sdk_ver: {sdk}')
 
-        if int(sdk) in range(21, 26):
+        if sdk in range(21, 26):
             ver = "Android_5.x-7.x"
-        elif int(sdk) in range(26, 28):
+        elif sdk in range(26, 28):
             ver = "Android_8.x"
-        elif int(sdk) == 28:
+        elif sdk == 28:
             ver = "Android_9.x"
         else:
             ver = "0"
         filepath = os.path.join(self.config.ASCREENCAP_FILEPATH_LOCAL, ver, arc, 'ascreencap')
         if not os.path.exists(filepath):
-            logger.critical('No suitable version of aScreenCap lib available for this device')
-            logger.critical('Please use ADB or uiautomator2 for screenshots instead')
+            self.ascreencap_available = False
+            logger.error('No suitable version of aScreenCap lib available for this device, '
+                         'please use other screenshot methods instead')
             raise RequestHumanTakeover
 
         logger.info(f'pushing {filepath}')

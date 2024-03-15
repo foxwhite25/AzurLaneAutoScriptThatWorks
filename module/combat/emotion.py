@@ -133,6 +133,13 @@ class FleetEmotion:
                             f'Fleet {self.fleet} Recover Location=\"Docks\" can not be used together, '
                             'please check your emotion settings')
             raise RequestHumanTakeover
+        # In 14-4 with 2X book, expected emotion reduce is 32, can't keep happy bonus (>120),
+        # otherwise will infinite task delay
+        if self.control == 'keep_exp_bonus' and expected_reduce >= 29:
+            expected_reduce = 29
+            logger.info(f'Fleet {self.fleet} expected_reduce is limited to 29 '
+                        f'when Emotion Control=\"Keep Happy Bonus\"')
+
         recover_count = (self.limit + expected_reduce - self.current) // self.speed
         recovered = (int(datetime.now().timestamp()) // 360 + recover_count + 1) * 360
         return datetime.fromtimestamp(recovered)
@@ -151,6 +158,14 @@ class Emotion:
         self.fleet_1 = FleetEmotion(self.config, fleet=1)
         self.fleet_2 = FleetEmotion(self.config, fleet=2)
         self.fleets = [self.fleet_1, self.fleet_2]
+
+    @property
+    def is_calculate(self):
+        return 'calculate' in self.config.Emotion_Mode
+
+    @property
+    def is_ignore(self):
+        return 'ignore' in self.config.Emotion_Mode
 
     def update(self):
         """
@@ -199,7 +214,7 @@ class Emotion:
         Raise:
             ScriptEnd: Delay current task to prevent emotion control in the future.
         """
-        if not self.config.Emotion_CalculateEmotion:
+        if not self.is_calculate:
             return
 
         method = self.config.Fleet_FleetOrder

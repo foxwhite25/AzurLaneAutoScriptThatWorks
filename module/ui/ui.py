@@ -1,79 +1,32 @@
 from module.base.button import Button
 from module.base.decorator import run_once
 from module.base.timer import Timer
-from module.freebies.assets import PURCHASE_POPUP
-from module.combat.assets import GET_ITEMS_1, GET_SHIP
+from module.coalition.assets import FLEET_PREPARATION as COALITION_FLEET_PREPARATION
+from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2, GET_SHIP
 from module.exception import (GameNotRunningError, GamePageUnknownError,
                               RequestHumanTakeover)
+from module.exercise.assets import EXERCISE_PREPARATION
+from module.freebies.assets import PURCHASE_POPUP
 from module.handler.assets import (AUTO_SEARCH_MENU_EXIT, BATTLE_PASS_NOTICE,
                                    GAME_TIPS, LOGIN_ANNOUNCE,
                                    LOGIN_CHECK, LOGIN_RETURN_SIGN,
-                                   MONTHLY_PASS_NOTICE)
+                                   MAINTENANCE_ANNOUNCE, MONTHLY_PASS_NOTICE)
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
 from module.map.assets import (FLEET_PREPARATION, MAP_PREPARATION,
                                MAP_PREPARATION_CANCEL, WITHDRAW)
+from module.meowfficer.assets import MEOWFFICER_BUY
 from module.ocr.ocr import Ocr
-from module.os_handler.assets import (AUTO_SEARCH_REWARD, EXCHANGE_CHECK,
-                                      RESET_FLEET_PREPARATION, RESET_TICKET_POPUP)
+from module.os_handler.assets import (AUTO_SEARCH_REWARD, EXCHANGE_CHECK, RESET_FLEET_PREPARATION, RESET_TICKET_POPUP)
 from module.raid.assets import RAID_FLEET_PREPARATION
-from module.ui.assets import (BACK_ARROW, DORM_FEED_CANCEL, DORM_INFO,
-                              DORM_TROPHY_CONFIRM, EVENT_LIST_CHECK, GOTO_MAIN,
-                              MAIN_GOTO_CAMPAIGN, MEOWFFICER_INFO,
-                              MEOWFFICER_GOTO_DORMMENU, META_CHECK,
-                              PLAYER_CHECK, RAID_CHECK, SHIPYARD_CHECK,
+from module.ui.assets import (BACK_ARROW, DORMMENU_GOTO_DORM, DORM_FEED_CANCEL, DORM_INFO, DORM_TROPHY_CONFIRM,
+                              EVENT_LIST_CHECK, GOTO_MAIN, MAIN_GOTO_CAMPAIGN, MEOWFFICER_GOTO_DORMMENU,
+                              MEOWFFICER_INFO, META_CHECK, PLAYER_CHECK, RAID_CHECK, SHIPYARD_CHECK,
                               SHOP_GOTO_SUPPLY_PACK)
-from module.ui.page import (Page, page_academy, page_archives,
-                            page_battle_pass, page_build, page_campaign,
-                            page_campaign_menu, page_commission, page_daily,
-                            page_dorm, page_dormmenu, page_event,
-                            page_event_list, page_exercise, page_fleet,
-                            page_guild, page_main, page_meowfficer, page_meta,
-                            page_mission, page_munitions, page_os, page_raid,
-                            page_research, page_reshmenu, page_reward,
-                            page_shipyard, page_shop, page_sp, page_storage,
-                            page_supply_pack, page_tactical, page_unknown)
-
-
-# from module.ui.page import *
+from module.ui.page import (Page, page_campaign, page_event, page_main, page_sp)
 
 
 class UI(InfoHandler):
-    # All pages defined.
-    ui_pages = [
-        page_unknown,
-        page_main,
-        page_fleet,
-        page_guild,
-        page_mission,
-        page_event_list,
-        page_campaign_menu,
-        page_campaign,
-        page_exercise,
-        page_daily,
-        page_event,
-        page_sp,
-        page_raid,
-        page_archives,
-        page_reward,
-        page_commission,
-        page_tactical,
-        page_battle_pass,
-        page_reshmenu,
-        page_research,
-        page_shipyard,
-        page_meta,
-        page_dormmenu,
-        page_dorm,
-        page_meowfficer,
-        page_academy,
-        page_shop,
-        page_storage,
-        page_munitions,
-        page_supply_pack,
-        page_build,
-        page_os,
-    ]
     ui_current: Page
 
     def ui_page_appear(self, page):
@@ -92,15 +45,15 @@ class UI(InfoHandler):
             return False
 
     def ui_click(
-        self,
-        click_button,
-        check_button,
-        appear_button=None,
-        additional=None,
-        confirm_wait=1,
-        offset=(30, 30),
-        retry_wait=10,
-        skip_first_screenshot=False,
+            self,
+            click_button,
+            check_button,
+            appear_button=None,
+            additional=None,
+            confirm_wait=1,
+            offset=(30, 30),
+            retry_wait=10,
+            skip_first_screenshot=False,
     ):
         """
         Args:
@@ -134,7 +87,7 @@ class UI(InfoHandler):
 
             if click_timer.reached():
                 if (isinstance(appear_button, Button) and self.appear(appear_button, offset=offset)) or (
-                    callable(appear_button) and appear_button()
+                        callable(appear_button) and appear_button()
                 ):
                     self.device.click(click_button)
                     click_timer.reset()
@@ -189,7 +142,7 @@ class UI(InfoHandler):
         def rotation_check():
             self.device.get_orientation()
 
-        timeout = Timer(5, count=10).start()
+        timeout = Timer(10, count=20).start()
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -203,7 +156,7 @@ class UI(InfoHandler):
                 break
 
             # Known pages
-            for page in self.ui_pages:
+            for page in Page.iter_pages():
                 if page.check_button is None:
                     continue
                 if self.ui_page_appear(page=page):
@@ -227,41 +180,23 @@ class UI(InfoHandler):
         logger.attr("EMULATOR__CONTROL_METHOD", self.config.Emulator_ControlMethod)
         logger.attr("SERVER", self.config.SERVER)
         logger.warning("Starting from current page is not supported")
-        logger.warning(f"Supported page: {[str(page) for page in self.ui_pages]}")
+        logger.warning(f"Supported page: {[str(page) for page in Page.iter_pages()]}")
         logger.warning('Supported page: Any page with a "HOME" button on the upper-right')
         logger.critical("Please switch to a supported page before starting Alas")
         raise GamePageUnknownError
 
-    def ui_goto(self, destination, offset=(30, 30), confirm_wait=0, skip_first_screenshot=True):
+    def ui_goto(self, destination, offset=(30, 30), skip_first_screenshot=True):
         """
         Args:
             destination (Page):
             offset:
-            confirm_wait:
             skip_first_screenshot:
         """
-        # Reset connection
-        for page in self.ui_pages:
-            page.parent = None
-
         # Create connection
-        visited = [destination]
-        visited = set(visited)
-        while 1:
-            new = visited.copy()
-            for page in visited:
-                for link in self.ui_pages:
-                    if link in visited:
-                        continue
-                    if page in link.links:
-                        link.parent = page
-                        new.add(link)
-            if len(new) == len(visited):
-                break
-            visited = new
+        Page.init_connection(destination)
+        self.interval_clear(list(Page.iter_check_buttons()))
 
         logger.hr(f"UI goto {destination}")
-        confirm_timer = Timer(confirm_wait, count=int(confirm_wait // 0.5)).start()
         while 1:
             GOTO_MAIN.clear_offset()
             if skip_first_screenshot:
@@ -271,15 +206,12 @@ class UI(InfoHandler):
 
             # Destination page
             if self.appear(destination.check_button, offset=offset):
-                if confirm_timer.reached():
-                    logger.info(f'Page arrive: {destination}')
-                    break
-            else:
-                confirm_timer.reset()
+                logger.info(f'Page arrive: {destination}')
+                break
 
             # Other pages
             clicked = False
-            for page in visited:
+            for page in Page.iter_pages():
                 if page.parent is None or page.check_button is None:
                     continue
                 if self.appear(page.check_button, offset=offset, interval=5):
@@ -287,7 +219,6 @@ class UI(InfoHandler):
                     button = page.links[page.parent]
                     self.device.click(button)
                     self.ui_button_interval_reset(button)
-                    confirm_timer.reset()
                     clicked = True
                     break
             if clicked:
@@ -298,8 +229,7 @@ class UI(InfoHandler):
                 continue
 
         # Reset connection
-        for page in self.ui_pages:
-            page.parent = None
+        Page.clear_connection()
 
     def ui_ensure(self, destination, skip_first_screenshot=True):
         """
@@ -333,14 +263,14 @@ class UI(InfoHandler):
         return self.ui_ensure(destination=page_sp)
 
     def ui_ensure_index(
-        self,
-        index,
-        letter,
-        next_button,
-        prev_button,
-        skip_first_screenshot=False,
-        fast=True,
-        interval=(0.2, 0.3),
+            self,
+            index,
+            letter,
+            next_button,
+            prev_button,
+            skip_first_screenshot=False,
+            fast=True,
+            interval=(0.2, 0.3),
     ):
         """
         Args:
@@ -351,8 +281,6 @@ class UI(InfoHandler):
             skip_first_screenshot (bool):
             fast (bool): Default true. False when index is not continuous.
             interval (tuple, int, float): Seconds between two click.
-            step_sleep (tuple, int, float): Seconds between two step.
-            finish_sleep (tuple, int, float): Second to wait when arrive.
         """
         logger.hr("UI ensure index")
         retry = Timer(1, count=2)
@@ -403,7 +331,9 @@ class UI(InfoHandler):
         # Daily reset
         if self.appear_then_click(LOGIN_ANNOUNCE, offset=(30, 30), interval=3):
             return True
-        if self.appear_then_click(GET_ITEMS_1, offset=(30, 30), interval=3):
+        if self.appear_then_click(GET_ITEMS_1, offset=True, interval=3):
+            return True
+        if self.appear_then_click(GET_ITEMS_2, offset=True, interval=3):
             return True
         if get_ship:
             if self.appear_then_click(GET_SHIP, interval=5):
@@ -456,7 +386,8 @@ class UI(InfoHandler):
         if self._opsi_reset_fleet_preparation_click >= 5:
             logger.critical("Failed to confirm OpSi fleets, too many click on RESET_FLEET_PREPARATION")
             logger.critical("Possible reason #1: You haven't set any fleets in operation siren")
-            logger.critical("Possible reason #2: Your fleets haven't satisfied the level restrictions in operation siren")
+            logger.critical(
+                "Possible reason #2: Your fleets haven't satisfied the level restrictions in operation siren")
             raise RequestHumanTakeover
         if self.appear_then_click(RESET_TICKET_POPUP, offset=(30, 30), interval=3):
             return True
@@ -517,11 +448,16 @@ class UI(InfoHandler):
         if self.appear_then_click(MEOWFFICER_INFO, offset=(30, 30), interval=3):
             self.interval_reset(GET_SHIP)
             return True
+        if self.appear(MEOWFFICER_BUY, offset=(30, 30), interval=3):
+            logger.info(f'UI additional: {MEOWFFICER_BUY} -> {BACK_ARROW}')
+            self.device.click(BACK_ARROW)
+            return True
 
         # Campaign preparation
         if self.appear(MAP_PREPARATION, offset=(30, 30), interval=3) \
-                or self.appear(FLEET_PREPARATION, offset=(30, 30), interval=3) \
-                or self.appear(RAID_FLEET_PREPARATION, offset=(30, 30), interval=3):
+                or self.appear(FLEET_PREPARATION, offset=(20, 50), interval=3) \
+                or self.appear(RAID_FLEET_PREPARATION, offset=(30, 30), interval=3) \
+                or self.appear(COALITION_FLEET_PREPARATION, offset=(30, 30), interval=3):
             self.device.click(MAP_PREPARATION_CANCEL)
             return True
         if self.appear_then_click(AUTO_SEARCH_MENU_EXIT, offset=(200, 30), interval=3):
@@ -549,6 +485,14 @@ class UI(InfoHandler):
         # Login
         if self.appear_then_click(LOGIN_CHECK, offset=(30, 30), interval=3):
             return True
+        if self.appear_then_click(MAINTENANCE_ANNOUNCE, offset=(30, 30), interval=3):
+            return True
+
+        # Mistaken click
+        if self.appear(EXERCISE_PREPARATION, interval=3):
+            logger.info(f'UI additional: {EXERCISE_PREPARATION} -> {GOTO_MAIN}')
+            self.device.click(GOTO_MAIN)
+            return True
 
         return False
 
@@ -561,9 +505,14 @@ class UI(InfoHandler):
         """
         if button == MEOWFFICER_GOTO_DORMMENU:
             self.interval_reset(GET_SHIP)
+        for switch_button in page_main.links.values():
+            if button == switch_button:
+                self.interval_reset(GET_SHIP)
         if button == MAIN_GOTO_CAMPAIGN:
             self.interval_reset(GET_SHIP)
             # Shinano event has the same title as raid
             self.interval_reset(RAID_CHECK)
         if button == SHOP_GOTO_SUPPLY_PACK:
             self.interval_reset(EXCHANGE_CHECK)
+        if button == DORMMENU_GOTO_DORM:
+            self.interval_reset(GET_SHIP)

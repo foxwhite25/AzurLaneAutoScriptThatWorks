@@ -33,9 +33,7 @@ class AshCombat(Combat):
         """
         if self.is_combat_executing():
             return False
-        if super().handle_battle_status(drop=drop):
-            return True
-        if self.appear(BATTLE_STATUS, offset=(20, 20), interval=self.battle_status_click_interval):
+        if self.appear(BATTLE_STATUS, offset=(120, 20), interval=self.battle_status_click_interval):
             if drop:
                 drop.handle_add(self)
             else:
@@ -44,6 +42,8 @@ class AshCombat(Combat):
             return True
         if self.appear(BATTLE_PREPARATION, offset=(30, 30), interval=2):
             self.device.click(BACK_ARROW)
+            return True
+        if super().handle_battle_status(drop=drop):
             return True
 
         return False
@@ -134,10 +134,6 @@ class OSAsh(UI, MapEventHandler):
             in: is_in_map
             out: is_in_map
         """
-        if not self.config.OpsiAshBeacon_AshAttack \
-                and not self.config.OpsiDossierBeacon_Enable:
-            return False
-
         if self.ash_collect_status() >= 100 \
                 and self._support_call_ash_beacon_task():
             self.config.task_call(task='OpsiAshBeacon')

@@ -5,7 +5,10 @@
 # ==================== Alas ====================
 
 Scheduler:
-  Enable: false
+  Enable:
+    type: checkbox
+    value: false
+    option: [ true, false ]
   NextRun: 2020-01-01 00:00:00
   Command: Alas
   SuccessInterval:
@@ -28,11 +31,11 @@ Emulator:
     value: disabled
     option: [ disabled, ]
   ScreenshotMethod:
-    value: ADB_nc
-    option: [ ADB, ADB_nc, uiautomator2, aScreenCap, aScreenCap_nc, DroidCast, DroidCast_raw, scrcpy ]
+    value: auto
+    option: [ auto, ADB, ADB_nc, uiautomator2, aScreenCap, aScreenCap_nc, DroidCast, DroidCast_raw, scrcpy ]
   ControlMethod:
     value: minitouch
-    option: [ ADB, uiautomator2, minitouch, Hermit ]
+    option: [ ADB, uiautomator2, minitouch, Hermit, MaaTouch ]
   ScreenshotDedithering: false
   AdbRestart: false
 RestartEmulator:
@@ -66,7 +69,7 @@ DropRecord:
   AzurStatsID: null
   API:
     value: default
-    option: [ default, cn_gz_reverse_proxy, cn_sh_reverse_proxy ]
+    option: [ default, cn_gz_reverse_proxy]
   ResearchRecord:
     value: do_not
     option: [ do_not, save, upload, save_and_upload ]
@@ -86,20 +89,27 @@ DropRecord:
     value: do_not
     option: [ do_not, save, upload, save_and_upload ]
 Retirement:
-  Enable: true
   RetireMode:
     value: one_click_retire
     option: [ one_click_retire, enhance, old_retire ]
+OneClickRetire:
+  KeepLimitBreak:
+    value: keep_limit_break
+    option: [ keep_limit_break, do_not_keep ]
+Enhance:
+  ShipToEnhance:
+    value: all
+    option: [ all, favourite ]
+  Filter:
+  CheckPerCategory: 5
+OldRetire:
+  N: true
+  R: true
+  SR: false
+  SSR: false
   RetireAmount:
     value: retire_all
     option: [ retire_all, retire_10 ]
-  EnhanceFavourite: false
-  EnhanceFilter:
-  EnhanceCheckPerCategory: 2
-  OldRetireN: true
-  OldRetireR: true
-  OldRetireSR: false
-  OldRetireSSR: false
 
 # ==================== Farm ====================
 
@@ -167,8 +177,9 @@ Submarine:
     value: '2_grid_to_boss'
     option: [ to_boss_position, 1_grid_to_boss, 2_grid_to_boss, use_open_ocean_support ]
 Emotion:
-  CalculateEmotion: true
-  IgnoreLowEmotionWarn: false
+  Mode:
+    value: calculate
+    option: [ calculate, ignore, calculate_ignore ]
   Fleet1Value: 119
   Fleet1Record:
     value: 2020-01-01 00:00:00
@@ -223,11 +234,12 @@ C124LargeLeveling:
     value: 3
     option: [ 3, 4, 5 ]
 GemsFarming:
-  FlagshipChange: true
-  FlagshipEquipChange: false
-  VanguardChange: false
-  VanguardEquipChange: false
-  LowEmotionRetreat: true
+  ChangeFlagship:
+    value: ship
+    option: [ ship, ship_equip ]
+  ChangeVanguard:
+    value: ship
+    option: [ disabled, ship, ship_equip ]
   CommonCV:
     value: any
     option: [ any, langley, bogue, ranger, hermes ]
@@ -251,18 +263,22 @@ EventDaily:
 Raid:
   Mode:
     value: hard
-    option: [ easy, normal, hard ]
+    option: [ easy, normal, hard, ex ]
   UseTicket: false
 RaidDaily:
   StageFilter: |-
     hard > normal > easy
 MaritimeEscort:
   Enable: true
+Coalition:
+  Fleet:
+    value: single
+    option: [ single, multi ]
+
 
 # ==================== Reward ====================
 
 Commission:
-  DoMajorCommission: false
   PresetFilter:
     value: cube
     option:
@@ -289,6 +305,7 @@ Commission:
     > UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
     > shortest
+  DoMajorCommission: false
 Tactical:
   TacticalFilter: |-
     SameT4 > SameT3 > SameT2 > SameT1
@@ -321,9 +338,12 @@ Research:
     option: [ always_use, only_05_hour, only_no_project, do_not_use ]
   AllowDelay: true
   PresetFilter:
-    value: series_5_blueprint_152
+    value: series_6_blueprint_203
     option:
       - custom
+      - series_6_blueprint_203
+      - series_6_blueprint_only
+      - series_6_203_only
       - series_5_blueprint_152
       - series_5_blueprint_only
       - series_5_152_only
@@ -347,6 +367,13 @@ Dorm:
   Collect: true
   Feed: true
   FeedFilter: 20000 > 10000 > 5000 > 3000 > 2000 > 1000
+BuyFurniture:
+  Enable: false
+  BuyOption:
+    type: select
+    value: all
+    option: [ set, all ]
+  LastRun: 2020-01-01 00:00:00
 Meowfficer:
   BuyAmount: 1
   FortChoreMeowfficer: true
@@ -383,6 +410,7 @@ GeneralShop:
   UseGems: false
   Refresh: false
   BuySkinBox: false
+  ConsumeCoins: false
   Filter: |-
     BookRedT3 > BookYellowT3 > BookBlueT3 > BookRedT2
     > Cube
@@ -460,10 +488,24 @@ MeritShop:
 CoreShop:
   Filter: |-
     Array
-Shipyard:
-  ResearchSeries: 1
-  ShipIndex: 0
+ShipyardDr:
+  ResearchSeries:
+    value: 2
+    option: [ 2, 3 ]
+  ShipIndex:
+    value: 0
+    option: [ 0, 1, 2, 3, 4, 5, 6 ]
   BuyAmount: 2
+  LastRun: 2020-01-01 00:00:00
+Shipyard:
+  ResearchSeries:
+    value: 1
+    option: [ 1, 2, 3, 4 ]
+  ShipIndex:
+    value: 0
+    option: [ 0, 1, 2, 3, 4, 5, 6 ]
+  BuyAmount: 2
+  LastRun: 2020-01-01 00:00:00
 Gacha:
   Pool:
     value: light
@@ -485,7 +527,11 @@ Mail:
   Delete: false
 SupplyPack:
   Collect: true
-
+  DayOfWeek:
+    value: 0
+    option: [ 0, 1, 2, 3, 4, 5, 6 ]
+Minigame:
+  Collect: false
 # ==================== Daily ====================
 
 Daily:
@@ -494,25 +540,25 @@ Daily:
     value: first
     option: [ skip, first, second, third ]
   EscortMissionFleet:
-    value: 5
+    value: 1
     option: [ 1, 2, 3, 4, 5, 6 ]
   AdvanceMission:
     value: first
     option: [ skip, first, second, third ]
   AdvanceMissionFleet:
-    value: 5
+    value: 1
     option: [ 1, 2, 3, 4, 5, 6 ]
   FierceAssault:
     value: first
     option: [ skip, first, second, third ]
   FierceAssaultFleet:
-    value: 5
+    value: 1
     option: [ 1, 2, 3, 4, 5, 6 ]
   TacticalTraining:
     value: second
     option: [ skip, first, second, third ]
   TacticalTrainingFleet:
-    value: 5
+    value: 1
     option: [ 1, 2, 3, 4, 5, 6 ]
   SupplyLineDisruption:
     value: second
@@ -521,7 +567,13 @@ Daily:
     value: first
     option: [ skip, first, second ]
   ModuleDevelopmentFleet:
-    value: 5
+    value: 1
+    option: [ 1, 2, 3, 4, 5, 6 ]
+  EmergencyModuleDevelopment:
+    value: first
+    option: [ skip, first, second ]
+  EmergencyModuleDevelopmentFleet:
+    value: 1
     option: [ 1, 2, 3, 4, 5, 6 ]
 Hard:
   HardStage: 11-4
@@ -533,7 +585,9 @@ Exercise:
     value: max_exp
     option: [ max_exp, easiest, leftmost, easiest_else_exp ]
   OpponentTrial: 1
-  ExercisePreserve: 0
+  ExerciseStrategy:
+    value: aggressive
+    option: [ aggressive, fri18, sat0, sat12, sat18, sun0, sun12, sun18 ]
   LowHpThreshold: 0.4
   LowHpConfirmWait: 0.1
   OpponentRefreshValue: 0
@@ -558,12 +612,13 @@ OpsiGeneral:
   AkashiShopFilter: |-
     ActionPoint > PurpleCoins
 OpsiAshBeacon:
-  AshAttack: true
+  AttackMode:
+    value: current
+    option: [ current, current_dossier ]
   OneHitMode: true
+  DossierAutoAttackMode: false
   RequestAssist: true
   EnsureFullyCollected: true
-OpsiDossierBeacon:
-  Enable: true
 OpsiFleetFilter:
   Filter: |-
     Fleet-4 > CallSubmarine > Fleet-2 > Fleet-3 > Fleet-1
@@ -580,7 +635,7 @@ OpsiShop:
   BuySupply: true
 OpsiVoucher:
   Filter: |-
-    LoggerAbyssal > LoggerObscure > HECombatPlan > Book > Coin
+    LoggerAbyssal > LoggerObscure > Book > Coin > Fragment
 OpsiDaily:
   DoMission: true
   UseTuningSample: true
@@ -627,6 +682,8 @@ Benchmark:
     value: screenshot_click
     option: [ screenshot_click, screenshot, click ]
 AzurLaneUncensored:
-  Repository: https://gitee.com/LmeSzinc/AzurLaneUncensored
+  Repository:
+    value: https://gitee.com/LmeSzinc/AzurLaneUncensored
+    display: disabled
 GameManager:
   AutoRestart: true

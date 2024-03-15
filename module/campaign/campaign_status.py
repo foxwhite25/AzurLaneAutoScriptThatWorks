@@ -4,12 +4,12 @@ import cv2
 import numpy as np
 
 from module.base.timer import Timer
-from module.campaign.assets import OCR_EVENT_PT, OCR_COIN, OCR_OIL
+from module.base.utils import color_similar, get_color
+from module.campaign.assets import OCR_COIN, OCR_EVENT_PT, OCR_OIL, OCR_OIL_CHECK
 from module.logger import logger
-from module.ocr.ocr import Ocr, Digit
+from module.ocr.ocr import Digit, Ocr
 from module.ui.ui import UI
 
-OCR_OIL = Digit(OCR_OIL, name='OCR_OIL', letter=(247, 247, 247), threshold=128)
 OCR_COIN = Digit(OCR_COIN, name='OCR_COIN', letter=(239, 239, 239), threshold=128)
 
 
@@ -78,12 +78,26 @@ class CampaignStatus(UI):
         return amount
 
     def _get_oil(self):
-        return OCR_OIL.ocr(self.device.image)
+        # Update offset
+        _ = self.appear(OCR_OIL_CHECK)
+
+        color = get_color(self.device.image, OCR_OIL_CHECK.button)
+        if color_similar(color, OCR_OIL_CHECK.color):
+            # Original color
+            ocr = Digit(OCR_OIL, name='OCR_OIL', letter=(247, 247, 247), threshold=128)
+        elif color_similar(color, (59, 59, 64)):
+            # With black overlay
+            ocr = Digit(OCR_OIL, name='OCR_OIL', letter=(165, 165, 165), threshold=128)
+        else:
+            logger.warning(f'Unexpected OCR_OIL_CHECK color')
+            ocr = Digit(OCR_OIL, name='OCR_OIL', letter=(247, 247, 247), threshold=128)
+
+        return ocr.ocr(self.device.image)
 
     def get_oil(self, skip_first_screenshot=True):
         """
         Returns:
-            int: Coin amount
+            int: Oil amount
         """
         amount = 0
         timeout = Timer(1, count=2).start()
@@ -94,11 +108,35 @@ class CampaignStatus(UI):
                 self.device.screenshot()
 
             if timeout.reached():
-                logger.warning('Get coin timeout')
+                logger.warning('Get oil timeout')
                 break
 
-            amount = OCR_OIL.ocr(self.device.image)
+            if not self.appear(OCR_OIL_CHECK, offset=(10, 2)):
+                logger.info('No oil icon')
+                continue
+
+            amount = self._get_oil()
             if amount >= 100:
                 break
 
         return amount
+
+    def is_balancer_task(self):
+        """
+        Returns:
+             bool: If is event task but not daily event task
+        """
+        tasks = [
+            'Event',
+            'Event2',
+            'Raid',
+            'GemsFarming',
+        ]
+        command = self.config.Scheduler_Command
+        if command in tasks:
+            if self.config.Campaign_Event == 'campaign_main':
+                return False
+            else:
+                return True
+        else:
+            return False

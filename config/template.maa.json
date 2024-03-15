@@ -50,8 +50,8 @@
     "MaaFight": {
       "Stage": "custom",
       "CustomStage": "Annihilation",
+      "MedicineTactics": "no_use",
       "Medicine": 0,
-      "RunOutOfMedicine": false,
       "Stone": 0,
       "Times": 5,
       "Drops": null,
@@ -73,8 +73,8 @@
     "MaaFight": {
       "Stage": "last",
       "CustomStage": null,
+      "MedicineTactics": "no_use",
       "Medicine": null,
-      "RunOutOfMedicine": false,
       "Stone": null,
       "Times": null,
       "Drops": null,
@@ -96,14 +96,15 @@
     "MaaFight": {
       "Stage": "last",
       "CustomStage": null,
+      "MedicineTactics": "no_use",
       "Medicine": null,
-      "RunOutOfMedicine": false,
       "Stone": null,
       "Times": null,
       "Drops": null,
       "DrGrandet": false
     },
     "MaaFightWeekly": {
+      "Enable": true,
       "Monday": "default",
       "Tuesday": "default",
       "Wednesday": "default",
@@ -151,14 +152,18 @@
     "MaaInfrast": {
       "Facility": "Mfg > Trade > Power > Control > Reception > Office > Dorm",
       "Drones": "Money",
-      "Threshold": 0.3,
+      "WorkThreshold": 12,
+      "ShiftThreshold": 4,
       "Notstationed": true,
       "Trust": true,
       "Replenish": false
     },
     "MaaCustomInfrast": {
       "Enable": false,
-      "Filename": null
+      "BuiltinConfig": "custom",
+      "Filename": null,
+      "CustomPeriod": "16, 4, 4",
+      "PlanIndex": 0
     },
     "Storage": {
       "Storage": {}
@@ -177,8 +182,8 @@
       "CreditFight": false,
       "Shopping": true,
       "ForceShoppingIfCreditFull": false,
-      "BuyFirst": "招聘许可 > 龙门币",
-      "BlackList": "碳 > 家具"
+      "BuyFirst": "招聘许可",
+      "BlackList": "碳 > 家具 > 加急许可"
     },
     "Storage": {
       "Storage": {}
@@ -207,14 +212,28 @@
       "ServerUpdate": "04:00"
     },
     "MaaRoguelike": {
-      "Theme": "Phantom",
+      "Theme": "Sami",
       "Mode": 0,
       "StartsCount": 9999999,
       "InvestmentsCount": 9999999,
       "StopWhenInvestmentFull": false,
       "Squad": "指挥分队",
       "Roles": "取长补短",
-      "CoreChar": null
+      "CoreChar": null,
+      "Support": "no_use"
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "MaaReclamationAlgorithm": {
+    "Scheduler": {
+      "Enable": false,
+      "NextRun": "2020-01-01 04:00:00",
+      "Command": "MaaReclamationAlgorithm",
+      "SuccessInterval": 60,
+      "FailureInterval": 120,
+      "ServerUpdate": "04:00"
     },
     "Storage": {
       "Storage": {}

@@ -6,13 +6,56 @@ MAIN_CHECK = MAIN_GOTO_CAMPAIGN
 
 
 class Page:
-    parent = None
+    # Key: str, page name like "page_main"
+    # Value: Page, page instance
+    all_pages = {}
+
+    @classmethod
+    def clear_connection(cls):
+        for page in cls.all_pages.values():
+            page.parent = None
+
+    @classmethod
+    def init_connection(cls, destination):
+        """
+        Initialize an A* path finding among pages.
+
+        Args:
+            destination (Page):
+        """
+        cls.clear_connection()
+
+        visited = [destination]
+        visited = set(visited)
+        while 1:
+            new = visited.copy()
+            for page in visited:
+                for link in cls.iter_pages():
+                    if link in visited:
+                        continue
+                    if page in link.links:
+                        link.parent = page
+                        new.add(link)
+            if len(new) == len(visited):
+                break
+            visited = new
+
+    @classmethod
+    def iter_pages(cls):
+        return cls.all_pages.values()
+
+    @classmethod
+    def iter_check_buttons(cls):
+        for page in cls.all_pages.values():
+            yield page.check_button
 
     def __init__(self, check_button):
         self.check_button = check_button
         self.links = {}
         (filename, line_number, function_name, text) = traceback.extract_stack()[-2]
         self.name = text[:text.find('=')].strip()
+        self.parent = None
+        Page.all_pages[self.name] = self
 
     def __eq__(self, other):
         return self.name == other.name
@@ -71,6 +114,11 @@ page_sp.link(button=GOTO_MAIN, destination=page_main)
 page_sp.link(button=BACK_ARROW, destination=page_campaign)
 page_campaign_menu.link(button=CAMPAIGN_MENU_GOTO_EVENT, destination=page_sp)
 page_campaign.link(button=CAMPAIGN_GOTO_EVENT, destination=page_sp)
+
+page_coalition = Page(COALITION_CHECK)
+page_coalition.link(button=GOTO_MAIN, destination=page_main)
+page_coalition.link(button=BACK_ARROW, destination=page_campaign)
+page_campaign_menu.link(button=CAMPAIGN_MENU_GOTO_EVENT, destination=page_coalition)
 
 # Operation Siren
 page_os = Page(OS_CHECK)
@@ -173,6 +221,11 @@ page_meowfficer.link(button=MEOWFFICER_GOTO_DORMMENU, destination=page_main)
 page_academy = Page(ACADEMY_CHECK)
 page_dormmenu.link(button=DORMMENU_GOTO_ACADEMY, destination=page_academy)
 page_academy.link(button=GOTO_MAIN, destination=page_main)
+
+# Game room & choose game
+page_game_room = Page(GAME_ROOM_CHECK)
+page_academy.link(button=ACADEMY_GOTO_GAME_ROOM, destination=page_game_room)
+page_game_room.link(button=GAME_ROOM_GOTO_MAIN, destination=page_main)
 
 # Shop
 page_shop = Page(SHOP_CHECK)

@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 from module.base.decorator import cached_property
-from module.base.timer import Timer, timer
+from module.base.timer import Timer
 from module.base.utils import get_color, image_size, limit_in, save_image
 from module.device.method.adb import Adb
 from module.device.method.ascreencap import AScreenCap
@@ -40,7 +40,6 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
             'scrcpy': self.screenshot_scrcpy,
         }
 
-    @timer
     def screenshot(self):
         """
         Returns:
@@ -99,7 +98,14 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
 
     @cached_property
     def screenshot_deque(self):
-        return deque(maxlen=int(self.config.Error_ScreenshotLength))
+        try:
+            length = int(self.config.Error_ScreenshotLength)
+        except ValueError:
+            logger.error(f'Error_ScreenshotLength={self.config.Error_ScreenshotLength} is not an integer')
+            raise RequestHumanTakeover
+        # Limit in 1~300
+        length = max(1, min(length, 300))
+        return deque(maxlen=length)
 
     def save_screenshot(self, genre='items', interval=None, to_base_folder=False):
         """Save a screenshot. Use millisecond timestamp as file name.
@@ -199,7 +205,12 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
                 self.get_orientation()
                 self.image = self._handle_orientated_image(self.image)
                 orientated = True
-                continue
+                width, height = image_size(self.image)
+                if width == 720 and height == 1280:
+                    logger.info('Unable to handle orientated screenshot, continue for now')
+                    return True
+                else:
+                    continue
             elif self.config.Emulator_Serial == 'wsa-0':
                 self.display_resize_wsa(0)
                 return False

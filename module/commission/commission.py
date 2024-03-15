@@ -1,6 +1,6 @@
 import copy
+from datetime import datetime, timedelta
 
-from datetime import datetime
 from scipy import signal
 
 from module.base.timer import Timer
@@ -10,12 +10,13 @@ from module.commission.assets import *
 from module.commission.preset import DICT_FILTER_PRESET, SHORTEST_FILTER
 from module.commission.project import COMMISSION_FILTER, Commission
 from module.config.config_generated import GeneratedConfig
-from module.config.utils import get_server_last_update
+from module.config.utils import get_server_last_update, get_server_next_update
 from module.exception import GameStuckError
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
-from module.ui.assets import COMMISSION_CHECK, REWARD_GOTO_COMMISSION, MAIN_GOTO_REWARD
+from module.retire.assets import DOCK_CHECK
+from module.ui.assets import BACK_ARROW, COMMISSION_CHECK, REWARD_GOTO_COMMISSION, MAIN_GOTO_REWARD
 from module.ui.page import page_reward, MAIN_CHECK
 from module.ui.scroll import Scroll
 from module.ui.switch import Switch
@@ -99,7 +100,7 @@ class RewardCommission(UI, InfoHandler):
             commissions = self._commission_detect(image)
 
             if commissions.count >= 2 and commissions.select(valid=False).count == 1:
-                logger.info('Found 1 invalid commission, retry commission detect')
+                logger.warning('Found 1 invalid commission, retry commission detect')
                 continue
             else:
                 return commissions
@@ -124,7 +125,7 @@ class RewardCommission(UI, InfoHandler):
         total = total[::-1]
         self.max_commission = 4
         for comm in total:
-            if comm.genre == 'event_daily':
+            if comm.genre == 'daily_event':
                 self.max_commission = 5
         running_count = int(
             np.sum([1 for c in total if c.status == 'running']))
@@ -284,11 +285,30 @@ class RewardCommission(UI, InfoHandler):
         self._commission_swipe_to_top()
         daily = self._commission_scan_list()
 
-        logger.hr('Scan urgent', level=2)
-        self._commission_ensure_mode('urgent')
-        self._commission_swipe_to_top()
-        urgent = self._commission_scan_list()
-        urgent.call('convert_to_night')  # Convert extra commission to night
+        urgent = SelectedGrids([])
+        for _ in range(2):
+            logger.hr('Scan urgent', level=2)
+            self._commission_ensure_mode('urgent')
+            self._commission_swipe_to_top()
+            urgent = self._commission_scan_list()
+            # Convert extra commission to night
+            urgent.call('convert_to_night')
+
+            # Not in 21:00~03:00, but scanned night commissions
+            # Probably some outdated commissions, a refresh should solve it
+            if datetime.now() - get_server_next_update('21:00') > timedelta(hours=6):
+                night = urgent.select(category_str='night')
+                if night:
+                    logger.warning('Not in 21:00~03:00, but scanned night commissions')
+                    for comm in night:
+                        logger.attr('Commission', comm)
+                    logger.info('Re-scan urgent commission list')
+                    # Poor sleep but acceptable in rare cases
+                    self.device.sleep(2)
+                    self._commission_ensure_mode('daily')
+                    continue
+
+            break
 
         logger.hr('Showing commission', level=2)
         logger.info('Daily commission')
@@ -304,13 +324,14 @@ class RewardCommission(UI, InfoHandler):
         self.daily_choose, self.urgent_choose = self._commission_choose(self.daily, self.urgent)
         return daily, urgent
 
-    def _commission_start_click(self, comm, is_urgent=False):
+    def _commission_start_click(self, comm, is_urgent=False, skip_first_screenshot=True):
         """
         Start a commission.
 
         Args:
             comm (Commission):
             is_urgent (bool):
+            skip_first_screenshot:
 
         Returns:
             bool: If success
@@ -325,14 +346,37 @@ class RewardCommission(UI, InfoHandler):
         comm_timer = Timer(7)
         count = 0
         while 1:
-            if comm_timer.reached():
-                self.device.click(comm.button)
-                self.device.sleep(0.3)
-                comm_timer.reset()
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
 
-            if self.handle_popup_confirm('COMMISSION_START'):
+            # End
+            if self.info_bar_count():
+                break
+            if count >= 3:
+                # Restart game and handle commission recommend bug.
+                # After you click "Recommend", your ships appear and then suddenly disappear.
+                # At the same time, the icon of commission is flashing.
+                logger.warning('Triggered commission list flashing bug')
+                raise GameStuckError('Triggered commission list flashing bug')
+
+            # Click
+            if self.appear_then_click(COMMISSION_START, offset=(5, 20), interval=7):
+                self.interval_reset(COMMISSION_ADVICE)
                 comm_timer.reset()
-                pass
+                continue
+            if self.handle_popup_confirm('COMMISSION_START'):
+                self.interval_reset(COMMISSION_ADVICE)
+                comm_timer.reset()
+                continue
+            # Accidentally entered dock
+            if self.appear(DOCK_CHECK, offset=(20, 20), interval=3):
+                logger.info(f'equip_enter {DOCK_CHECK} -> {BACK_ARROW}')
+                self.device.click(BACK_ARROW)
+                comm_timer.reset()
+                continue
+            # Check if is the right commission
             if self.appear(COMMISSION_ADVICE, offset=(5, 20), interval=7):
                 area = (0, 0, image_size(self.device.image)[0], COMMISSION_ADVICE.button[1])
                 current = self.commission_detect(area=area)
@@ -349,23 +393,15 @@ class RewardCommission(UI, InfoHandler):
                     logger.warning('No selected commission detected, assuming correct')
                 self.device.click(COMMISSION_ADVICE)
                 count += 1
+                self.interval_reset(COMMISSION_ADVICE)
+                self.interval_clear(COMMISSION_START)
                 comm_timer.reset()
-                pass
-            if self.appear_then_click(COMMISSION_START, offset=(5, 20), interval=7):
+                continue
+            # Enter
+            if comm_timer.reached():
+                self.device.click(comm.button)
+                self.device.sleep(0.3)
                 comm_timer.reset()
-                pass
-
-            # End
-            if self.info_bar_count():
-                break
-            if count >= 3:
-                # Restart game and handle commission recommend bug.
-                # After you click "Recommend", your ships appear and then suddenly disappear.
-                # At the same time, the icon of commission is flashing.
-                logger.warning('Triggered commission list flashing bug')
-                raise GameStuckError('Triggered commission list flashing bug')
-
-            self.device.screenshot()
 
         return True
 

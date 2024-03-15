@@ -1,6 +1,5 @@
-import os
-
 from deploy.config import DeployConfig
+from deploy.git_over_cdn.client import GitOverCdnClient
 from deploy.logger import logger
 from deploy.utils import *
 
@@ -38,9 +37,9 @@ class GitManager(DeployConfig):
             self.execute(f'"{self.git}" config --local --unset https.proxy', allow_failure=True)
 
         if ssl_verify:
-            self.execute(f'"{self.git}" config --local http.sslVerify true')
+            self.execute(f'"{self.git}" config --local http.sslVerify true', allow_failure=True)
         else:
-            self.execute(f'"{self.git}" config --local http.sslVerify false')
+            self.execute(f'"{self.git}" config --local http.sslVerify false', allow_failure=True)
 
         logger.hr('Set Git Repository', 1)
         if not self.execute(f'"{self.git}" remote set-url {source} {repo}', allow_failure=True):
@@ -51,10 +50,14 @@ class GitManager(DeployConfig):
 
         logger.hr('Pull Repository Branch', 1)
         # Remove git lock
-        lock_file = './.git/index.lock'
-        if os.path.exists(lock_file):
-            logger.info(f'Lock file {lock_file} exists, removing')
-            os.remove(lock_file)
+        for lock_file in [
+            './.git/index.lock',
+            './.git/HEAD.lock',
+            './.git/refs/heads/master.lock',
+        ]:
+            if os.path.exists(lock_file):
+                logger.info(f'Lock file {lock_file} exists, removing')
+                os.remove(lock_file)
         if keep_changes:
             if self.execute(f'"{self.git}" stash', allow_failure=True):
                 self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
@@ -72,7 +75,19 @@ class GitManager(DeployConfig):
             self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
 
         logger.hr('Show Version', 1)
-        self.execute(f'"{self.git}" log --no-merges -1')
+        self.execute(f'"{self.git}" --no-pager log --no-merges -1')
+
+    @property
+    def goc_client(self):
+        client = GitOverCdnClient(
+            url='https://vip.123pan.cn/1818706573/pack/LmeSzinc_AzurLaneAutoScript_master',
+            folder=self.root_filepath,
+            source='origin',
+            branch='master',
+            git=self.git,
+        )
+        client.logger = logger
+        return client
 
     def git_install(self):
         logger.hr('Update Alas', 0)
@@ -80,6 +95,10 @@ class GitManager(DeployConfig):
         if not self.AutoUpdate:
             logger.info('AutoUpdate is disabled, skip')
             return
+
+        if self.GitOverCdn:
+            if self.goc_client.update(keep_changes=self.KeepLocalChanges):
+                return
 
         self.git_repository_init(
             repo=self.Repository,

@@ -1,8 +1,7 @@
-from module.logger import logger
-from module.map.map_base import CampaignMap
-from module.map.map_grids import RoadGrids, SelectedGrids
-
 from .campaign_base import CampaignBase
+from module.map.map_base import CampaignMap
+from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
 
 MAP = CampaignMap('SP1')
 MAP.shape = 'H7'
@@ -48,11 +47,13 @@ class Config:
     MAP_HAS_MAP_STORY = False
     MAP_HAS_FLEET_STEP = True
     MAP_HAS_AMBUSH = False
+    MAP_HAS_MYSTERY = False
     # ===== End of generated config =====
 
     STAGE_ENTRANCE = ['normal', 'half']  # normal, blue, half
-    MAP_SWIPE_MULTIPLY = 1.866
-    MAP_SWIPE_MULTIPLY_MINITOUCH = 1.804
+    MAP_SWIPE_MULTIPLY = (1.221, 1.244)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.181, 1.203)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.146, 1.167)
     INTERNAL_LINES_FIND_PEAKS_PARAMETERS = {
         'height': (80, 255 - 40),
         'width': (0.9, 10),
@@ -69,8 +70,14 @@ class Config:
 
 class Campaign(CampaignBase):
     MAP = MAP
+    ENEMY_FILTER = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
 
     def battle_0(self):
+        if self.clear_siren():
+            return True
+        if self.clear_filter_enemy(self.ENEMY_FILTER, preserve=0):
+            return True
+
         return self.battle_default()
 
     def battle_4(self):

@@ -5,9 +5,10 @@ import numpy as np
 from module.base.timer import Timer
 from module.base.utils import area_offset
 from module.combat.assets import GET_ITEMS_1, GET_ITEMS_1_RYZA
-from module.exception import CampaignEnd, MapDetectionError
-from module.handler.assets import AUTO_SEARCH_MENU_CONTINUE, GAME_TIPS
+from module.exception import CampaignEnd, GameNotRunningError, MapDetectionError
+from module.handler.assets import AUTO_SEARCH_MENU_CONTINUE, GAME_TIPS, GET_MISSION
 from module.logger import logger
+from module.map.assets import MAP_PREPARATION
 from module.map.map_base import CampaignMap, location2node
 from module.map.map_operation import MapOperation
 from module.map.utils import location_ensure, random_direction
@@ -15,7 +16,8 @@ from module.map_detection.grid import Grid
 from module.map_detection.utils import area2corner, trapezoid2area
 from module.map_detection.view import View
 from module.os.assets import GLOBE_GOTO_MAP
-from module.os_handler.assets import AUTO_SEARCH_REWARD, PORT_SUPPLY_CHECK
+from module.os_handler.assets import AUTO_SEARCH_REWARD, GET_ADAPTABILITY, MISSION_CHECK as OPSI_MISSION_CHECK, \
+    PORT_SUPPLY_CHECK
 from module.ui.assets import BACK_ARROW
 
 
@@ -42,6 +44,8 @@ class Camera(MapOperation):
             # Map grid fit
             if self.config.DEVICE_CONTROL_METHOD == 'minitouch':
                 distance = self.view.swipe_base * self.config.MAP_SWIPE_MULTIPLY_MINITOUCH
+            elif self.config.DEVICE_CONTROL_METHOD == 'MaaTouch':
+                distance = self.view.swipe_base * self.config.MAP_SWIPE_MULTIPLY_MAATOUCH
             else:
                 distance = self.view.swipe_base * self.config.MAP_SWIPE_MULTIPLY
             # Optimize swipe path
@@ -124,21 +128,34 @@ class Camera(MapOperation):
                 logger.warning('Perspective error caused by info bar')
                 self.handle_info_bar()
                 return False
-            elif self.appear(GET_ITEMS_1):
+            elif self.appear(GET_ITEMS_1, offset=5):
                 logger.warning('Perspective error caused by get_items')
-                self.handle_mystery()
+                # Don't use handle_mystery() here since OpSi overrides it.
+                self.device.click(GET_ITEMS_1)
                 return False
             elif self.appear(GET_ITEMS_1_RYZA, offset=(20, 20)):
                 logger.warning('Perspective error caused by GET_ITEMS_1_RYZA')
                 self.device.click(GET_ITEMS_1_RYZA)
                 return False
+            elif self.appear(GET_ADAPTABILITY, offset=(20, 20)):
+                logger.warning('Perspective error caused by GET_ADAPTABILITY')
+                self.device.click(GET_ADAPTABILITY)
+                return False
             elif self.handle_story_skip():
                 logger.warning('Perspective error caused by story')
                 self.ensure_no_story(skip_first_screenshot=False)
                 return False
+            elif self.appear(GET_MISSION, offset=(20, 20)):
+                logger.warning('Perspective error caused by GET_MISSION')
+                self.device.click(GET_MISSION)
+                return False
             elif self.is_in_stage():
                 logger.warning('Image is in stage')
                 raise CampaignEnd('Image is in stage')
+            elif self.appear(MAP_PREPARATION, offset=(20, 20)):
+                logger.warning('Image is in MAP_PREPARATION')
+                self.enter_map_cancel()
+                raise CampaignEnd('Image is in MAP_PREPARATION')
             elif self.appear(AUTO_SEARCH_MENU_CONTINUE, offset=self._auto_search_menu_offset):
                 logger.warning('Image is in auto search menu')
                 self.ensure_auto_search_exit()
@@ -157,6 +174,16 @@ class Camera(MapOperation):
                     logger.warning('Cannot find method os_auto_search_quit(), use ui_click() instead')
                     self.ui_click(AUTO_SEARCH_REWARD, check_button=self.is_in_map, offset=(50, 50),
                                   retry_wait=3, skip_first_screenshot=True)
+                    return False
+            elif self.appear(OPSI_MISSION_CHECK, offset=(20, 20)):
+                logger.warning('Perspective error caused by OPSI_MISSION_CHECK')
+                if hasattr(self, 'os_mission_quit'):
+                    self.os_mission_quit()
+                    return False
+                else:
+                    logger.warning('Cannot find method os_mission_quit(), use ui_click() instead')
+                    self.ui_click(OPSI_MISSION_CHECK, check_button=self.is_in_map, offset=(200, 5),
+                                  skip_first_screenshot=True)
                     return False
             elif 'opsi' in self.config.task.command.lower() and self.handle_popup_confirm('OPSI'):
                 # Always confirm popups in OpSi, same popups in os_map_goto_globe()
@@ -179,6 +206,10 @@ class Camera(MapOperation):
                 logger.warning(string)
                 x, y = string.split('=')[1].strip('() ').split(',')
                 self._map_swipe((-int(x.strip()), -int(y.strip())))
+            # Finally check if game is alive
+            elif not self.device.app_is_running():
+                logger.error('Trying to update camera but game died')
+                raise GameNotRunningError
             else:
                 raise e
 

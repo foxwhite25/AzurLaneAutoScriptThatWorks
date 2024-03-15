@@ -6,7 +6,7 @@ from module.map.map_grids import RoadGrids, SelectedGrids
 MAP = CampaignMap('9-2')
 MAP.shape = 'H5'
 MAP.camera_data = ['E3']
-MAP.camera_data_spawn_point = ['D1', 'D3']
+MAP.camera_data_spawn_point = ['C1', 'C3']
 MAP.map_data = """
     SP -- ++ ++ ++ Me -- MB
     ++ -- ++ ++ ++ ME ++ ++
@@ -44,9 +44,7 @@ step_on = SelectedGrids([F3, E4])
 
 class Config:
     SUBMARINE = 0
-    INTERNAL_LINES_HOUGHLINES_THRESHOLD = 40
-    EDGE_LINES_HOUGHLINES_THRESHOLD = 40
-    COINCIDENT_POINT_ENCOURAGE_DISTANCE = 1.5
+    HOMO_STORAGE = ((9, 5), [(214.274, 100.482), (1300.358, 100.482), (79.666, 584.209), (1505.19, 584.209)])
     MAP_ENSURE_EDGE_INSIGHT_CORNER = 'bottom'
 
 
@@ -71,4 +69,4 @@ class Campaign(CampaignBase):
                 if self.clear_roadblocks([road_main]):
                     return True
 
-        return self.fleet_2.clear_boss()
+        return self.fleet_boss.clear_boss()

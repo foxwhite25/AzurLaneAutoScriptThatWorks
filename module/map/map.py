@@ -22,7 +22,7 @@ class Map(Fleet):
         logger.info('Clear enemy: %s' % grid)
         expected = f'combat_{expected}' if expected else 'combat'
         self.show_fleet()
-        if self.config.Emotion_CalculateEmotion and self.config.Campaign_UseFleetLock:
+        if self.emotion.is_calculate and self.config.Campaign_UseFleetLock:
             self.emotion.wait(fleet_index=self.fleet_current_index)
         self.goto(grid, expected=expected)
 
@@ -508,7 +508,7 @@ class Map(Fleet):
         Returns:
             bool: if clear an enemy.
         """
-        if self.fleet_boss_index != 2:
+        if not self.config.FLEET_2:
             return False
         for grid in grids:
             if self.fleet_at(grid=grid, fleet=2):
@@ -623,9 +623,10 @@ class Map(Fleet):
         Returns:
             bool: If clear an enemy.
         """
-        if self.fleet_boss_index != 2 or not self.config.MAP_HAS_MOVABLE_ENEMY:
+        if not self.config.FLEET_2 or not self.config.MAP_HAS_MOVABLE_ENEMY:
             return False
 
+        # When having 2 fleet
         for n in range(20):
             if not self.map.select(is_siren=True):
                 return False
@@ -708,7 +709,7 @@ class Map(Fleet):
         self.show_fleet()
         prev = self.battle_count
         for n, grid in enumerate(itertools.cycle(route)):
-            if self.config.Emotion_CalculateEmotion and self.config.Campaign_UseFleetLock:
+            if self.emotion.is_calculate and self.config.Campaign_UseFleetLock:
                 self.emotion.wait(fleet_index=self.fleet_current_index)
             self.goto(grid, expected='combat_nothing')
 

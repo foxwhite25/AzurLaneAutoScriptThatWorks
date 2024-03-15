@@ -113,18 +113,18 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
                 self.interval_clear(GET_ITEMS_1)
                 continue
             if self.appear_then_click(EQUIP_CONFIRM, offset=(30, 30), interval=2):
+                executed = True
                 continue
             if self.appear_then_click(EQUIP_CONFIRM_2, offset=(30, 30), interval=2):
                 self.interval_clear(GET_ITEMS_1)
-                executed = True
                 continue
             if self.appear(GET_ITEMS_1, offset=(30, 30), interval=2):
                 self.device.click(GET_ITEMS_1_RETIREMENT_SAVE)
                 self.interval_reset(SHIP_CONFIRM)
                 continue
             if self._unable_to_enhance \
-                    or self.config.Retirement_OldRetireSR \
-                    or self.config.Retirement_OldRetireSSR \
+                    or self.config.OldRetire_SR \
+                    or self.config.OldRetire_SSR \
                     or self.config.Retirement_RetireMode == 'one_click_retire':
                 if self.handle_popup_confirm(name='RETIRE_SR_SSR', offset=(20, 50)):
                     continue
@@ -147,13 +147,13 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
     @property
     def _retire_rarity(self):
         rarity = set()
-        if self.config.Retirement_OldRetireN:
+        if self.config.OldRetire_N:
             rarity.add('N')
-        if self.config.Retirement_OldRetireR:
+        if self.config.OldRetire_R:
             rarity.add('R')
-        if self.config.Retirement_OldRetireSR:
+        if self.config.OldRetire_SR:
             rarity.add('SR')
-        if self.config.Retirement_OldRetireSSR:
+        if self.config.OldRetire_SSR:
             rarity.add('SSR')
         return rarity
 
@@ -188,8 +188,8 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
                     break
 
                 # Click
-                if click_count >= 3:
-                    logger.warning('Failed to select ships using ONE_CLICK_RETIREMENT after 3 trial, '
+                if click_count >= 7:
+                    logger.warning('Failed to select ships using ONE_CLICK_RETIREMENT after 7 trial, '
                                    'probably because game bugged, a re-enter should fix it')
                     # Mark as retire finished, higher level will call retires
                     end = True
@@ -275,17 +275,9 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
         """
         logger.info('Retire abandoned flagships of GemsFarming')
 
-        gems_farming_enable: bool = self.config.cross_get(keys='GemsFarming.Scheduler.Enable', default=False)
-        if not (gems_farming_enable and self.config.GemsFarming_FlagshipChange):
-            logger.info('GemsFarming or GemsFarming_FlagshipChange is not enabled, skip')
-            return 0
-
-        def server_support_flagship_retire() -> bool:
-            return self.config.SERVER in ['cn', 'en', 'jp']
-
-        if not server_support_flagship_retire():
-            logger.info(f'Server {self.config.SERVER} does not yet support flagships retirement, skip')
-            logger.info('Please contact the developer to improve as soon as possible')
+        gems_farming_enable: bool = self.config.is_task_enabled('GemsFarming')
+        if not gems_farming_enable:
+            logger.info('Not in GemsFarming, skip')
             return 0
 
         self.dock_filter_set(index='cv', rarity='common', extra='not_level_max', sort='level')
@@ -307,6 +299,9 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
                 self.device.screenshot()
 
             ships = scanner.scan(self.device.image)
+            if not ships:
+                # exit if nothing can be retired
+                break
             if keep_one:
                 if len(ships) < 2:
                     break
@@ -332,9 +327,6 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
         Returns:
             bool: If retired.
         """
-        if not self.config.Retirement_Enable:
-            return False
-
         if self._unable_to_enhance:
             if self.appear_then_click(RETIRE_APPEAR_1, offset=(20, 20), interval=3):
                 self.interval_clear(IN_RETIREMENT_CHECK)
@@ -409,11 +401,10 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
                     logger.warning('No ship retired, trying to reset quick retire settings to "keep_limit_break"')
                     self.quick_retire_setting_set(filter_5='keep_limit_break')
                     total = self.retire_ships_one_click()
-                # Not determined, this may cause user loss
-                # if not total:
-                #     logger.warning('No ship retired, trying to reset quick retire settings to "all"')
-                #     self.quick_retire_setting_set('all')
-                #     total = self.retire_ships_one_click()
+                if not total and self.config.OneClickRetire_KeepLimitBreak == 'do_not_keep':
+                    logger.warning('No ship retired, trying to reset quick retire settings to "all"')
+                    self.quick_retire_setting_set('all')
+                    total = self.retire_ships_one_click()
             total += self.retire_gems_farming_flagships(keep_one=total > 0)
             if not total:
                 logger.critical('No ship retired')
@@ -477,7 +468,7 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
                                   color=button.color,
                                   name=f'TEMPLATE_{common_cv_name}_RETIRE')
 
-                return None
+            return None
         else:
 
             template = globals()[

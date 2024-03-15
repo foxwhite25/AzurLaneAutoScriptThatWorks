@@ -96,7 +96,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         # Task to run and bind.
         # Task means the name of the function to run in AzurLaneAutoScript class.
         self.task: Function
-        if config_name == "template":
+        # Template config is used for dev tools
+        self.is_template_config = config_name.startswith("template")
+
+        if self.is_template_config:
             # For dev tools
             logger.info("Using template config, which is read only")
             self.auto_update = False
@@ -120,32 +123,42 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         for path, value in self.modified.items():
             deep_set(self.data, keys=path, value=value)
 
-    def bind(self, func, func_set=None):
+    def bind(self, func, func_list=None):
         """
         Args:
             func (str, Function): Function to run
-            func_set (set): Set of tasks to be bound
+            func_list (list[str]): List of tasks to be bound
         """
-        if func_set is None:
-            func_set = {"General", "Alas"}
         if isinstance(func, Function):
             func = func.command
-        func_set.add(func)
+        # func_list: ["General", "Alas", <task_general>, <task>, *func_list]
+        if func_list is None:
+            func_list = []
+        if func not in func_list:
+            func_list.insert(0, func)
         if func.startswith("Opsi"):
-            func_set.add("OpsiGeneral")
+            if "OpsiGeneral" not in func_list:
+                func_list.insert(0, "OpsiGeneral")
         if (
             func.startswith("Event")
             or func.startswith("Raid")
+            or func.startswith("Coalition")
             or func in ["MaritimeEscort", "GemsFarming"]
         ):
-            func_set.add("EventGeneral")
-            func_set.add("TaskBalancer")
-        logger.info(f"Bind task {func_set}")
+            if "EventGeneral" not in func_list:
+                func_list.insert(0, "EventGeneral")
+            if "TaskBalancer" not in func_list:
+                func_list.insert(0, "TaskBalancer")
+        if "Alas" not in func_list:
+            func_list.insert(0, "Alas")
+        if "General" not in func_list:
+            func_list.insert(0, "General")
+        logger.info(f"Bind task {func_list}")
 
         # Bind arguments
         visited = set()
         self.bound.clear()
-        for func in func_set:
+        for func in func_list:
             func_data = self.data.get(func, {})
             for group, group_data in func_data.items():
                 for arg, value in group_data.items():
@@ -257,7 +270,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         self.bind(self.task)
         self.save()
 
-    def config_override(self):
+    def override(self, **kwargs):
         now = datetime.now().replace(microsecond=0)
         limited = set()
 
@@ -279,13 +292,14 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         limit_next_run(["OpsiArchive"], limit=now + timedelta(days=7, seconds=-1))
         limit_next_run(self.args.keys(), limit=now + timedelta(hours=24, seconds=-1))
 
-    def override(self, **kwargs):
         """
         Override anything you want.
         Variables stall remain overridden even config is reloaded from yaml file.
         Note that this method is irreversible.
         """
         pass
+
+    config_override = override
 
     def set_record(self, **kwargs):
         """
@@ -491,6 +505,9 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                     "OpsiObscure",
                     "OpsiAbyssal",
                     "OpsiStronghold",
+                    # Delay OpsiArchive, since OpsiArchive and OpsiDaily share the same mission list,
+                    # although it does not requires any AP to enter.
+                    "OpsiArchive",
                     "OpsiMeowfficerFarming",
                 ]
             )
@@ -531,9 +548,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         if deep_get(self.data, keys=f"{task}.Scheduler.NextRun", default=None) is None:
             raise ScriptError(f"Task to call: `{task}` does not exist in user config")
 
-        if force_call or deep_get(
-            self.data, keys=f"{task}.Scheduler.Enable", default=False
-        ):
+        if force_call or self.is_task_enabled(task):
             logger.info(f"Task call: {task}")
             self.modified[f"{task}.Scheduler.NextRun"] = datetime.now().replace(
                 microsecond=0
@@ -589,6 +604,9 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         """
         if self.task_switched():
             self.task_stop(message=message)
+
+    def is_task_enabled(self, task):
+        return bool(self.cross_get(keys=[task, 'Scheduler', 'Enable'], default=False))
 
     @property
     def campaign_name(self):
@@ -720,6 +738,12 @@ class ConfigBackup:
     def recover(self):
         for key, value in self.backup.items():
             self.config.__setattr__(key, value)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.recover()
 
 
 class MultiSetWrapper:

@@ -13,13 +13,11 @@ from adbutils.errors import AdbError
 
 from module.base.decorator import Config, cached_property, del_cached_property
 from module.base.utils import ensure_time
-from module.config.server import set_server
+from module.config.server import VALID_CHANNEL_PACKAGE, VALID_PACKAGE, set_server
 from module.device.connection_attr import ConnectionAttr
-from module.device.method.utils import (RETRY_DELAY, RETRY_TRIES, remove_shell_warning,
-                                        handle_adb_error, PackageNotInstalled,
-                                        recv_all, possible_reasons,
-                                        random_port, get_serial_pair)
-from module.exception import RequestHumanTakeover, EmulatorNotRunningError
+from module.device.method.utils import (PackageNotInstalled, RETRY_TRIES, get_serial_pair, handle_adb_error,
+                                        possible_reasons, random_port, recv_all, remove_shell_warning, retry_sleep)
+from module.exception import EmulatorNotRunningError, RequestHumanTakeover
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
 
@@ -35,7 +33,7 @@ def retry(func):
         for _ in range(RETRY_TRIES):
             try:
                 if callable(init):
-                    self.sleep(RETRY_DELAY)
+                    retry_sleep(_)
                     init()
                 return func(self, *args, **kwargs)
             # Can't handle
@@ -109,6 +107,8 @@ class Connection(ConnectionAttr):
             set_server(self.package)
         logger.attr('PackageName', self.package)
         logger.attr('Server', self.config.SERVER)
+
+        self.check_mumu_app_keep_alive()
 
     @Config.when(DEVICE_OVER_HTTP=False)
     def adb_command(self, cmd, timeout=10):
@@ -215,15 +215,72 @@ class Connection(ConnectionAttr):
             # str
             return result
 
+    def adb_getprop(self, name):
+        """
+        Get system property in Android, same as `getprop <name>`
+
+        Args:
+            name (str): Property name
+
+        Returns:
+            str:
+        """
+        return self.adb_shell(['getprop', name]).strip()
+
+    @cached_property
+    def cpu_abi(self) -> str:
+        """
+        Returns:
+            str: arm64-v8a, armeabi-v7a, x86, x86_64
+        """
+        abi = self.adb_getprop('ro.product.cpu.abi')
+        if not len(abi):
+            logger.error(f'CPU ABI invalid: "{abi}"')
+        return abi
+
+    @cached_property
+    def sdk_ver(self) -> int:
+        """
+        Android SDK/API levels, see https://apilevels.com/
+        """
+        sdk = self.adb_getprop('ro.build.version.sdk')
+        try:
+            return int(sdk)
+        except ValueError:
+            logger.error(f'SDK version invalid: {sdk}')
+
+        return 0
+
     @cached_property
     def is_avd(self):
         if get_serial_pair(self.serial)[0] is None:
             return False
-        if 'ranchu' in self.adb_shell(['getprop', 'ro.hardware']):
+        if 'ranchu' in self.adb_getprop('ro.hardware'):
             return True
-        if 'goldfish' in self.adb_shell(['getprop', 'ro.hardware.audio.primary']):
+        if 'goldfish' in self.adb_getprop('ro.hardware.audio.primary'):
             return True
         return False
+
+    @retry
+    def check_mumu_app_keep_alive(self):
+        if not self.is_mumu_family:
+            return False
+
+        res = self.adb_getprop('nemud.app_keep_alive')
+        logger.attr('nemud.app_keep_alive', res)
+        if res == '':
+            # Empry property, might not be a mumu emulator or might be an old mumu
+            return True
+        elif res == 'false':
+            # Disabled
+            return True
+        elif res == 'true':
+            # https://mumu.163.com/help/20230802/35047_1102450.html
+            logger.critical('请在MuMu模拟器设置内关闭 "后台挂机时保活运行"')
+            raise RequestHumanTakeover
+        else:
+            logger.warning(f'Invalid nemud.app_keep_alive value: {res}')
+            return False
 
     @cached_property
     def _nc_server_host_port(self):
@@ -294,8 +351,7 @@ class Connection(ConnectionAttr):
         Returns:
             list[str]: ['nc'] or ['busybox', 'nc']
         """
-        sdk = self.adb_shell(['getprop', 'ro.build.version.sdk'])
-        sdk = int(sdk)
+        sdk = self.sdk_ver
         logger.info(f'sdk_ver: {sdk}')
         if sdk >= 28:
             # Android 9 emulators does not have `nc`, try `busybox nc`
@@ -473,6 +529,18 @@ class Connection(ConnectionAttr):
         Returns:
             bool: If success
         """
+        # Disconnect offline device before connecting
+        for device in self.list_device():
+            if device.status == 'offline':
+                logger.warning(f'Device {device.serial} is offline, disconnect it before connecting')
+                self.adb_disconnect(device.serial)
+            elif device.status == 'unauthorized':
+                logger.error(f'Device {device.serial} is unauthorized, please accept ADB debugging on your device')
+            elif device.status == 'device':
+                pass
+            else:
+                logger.warning(f'Device {device.serial} is is having a unknown status: {device.status}')
+
         # Skip for emulator-5554
         if 'emulator-' in serial:
             logger.info(f'"{serial}" is a `emulator-*` serial, skip adb connect')
@@ -480,19 +548,6 @@ class Connection(ConnectionAttr):
         if re.match(r'^[a-zA-Z0-9]+$', serial):
             logger.info(f'"{serial}" seems to be a Android serial, skip adb connect')
             return True
-
-        # Disconnect offline device before connecting
-        device = self.list_device().select(serial=serial).first_or_none()
-        if device:
-            if device.status == 'offline':
-                logger.warning(f'Device {serial} is offline, disconnect it before connecting')
-                self.adb_disconnect(serial)
-            elif device.status == 'unauthorized':
-                logger.error(f'Device {serial} is unauthorized, please accept ADB debugging on your device')
-            elif device.status == 'device':
-                pass
-            else:
-                logger.error(f'Device {serial} is is having a unknown status: {device.status}')
 
         # Try to connect
         for _ in range(3):
@@ -774,25 +829,24 @@ class Connection(ConnectionAttr):
         packages = re.findall(r'package:([^\s]+)', output)
         return packages
 
-    def list_azurlane_packages(self, keywords=('azurlane', 'blhx'), show_log=True):
+    def list_known_packages(self, show_log=True):
         """
         Args:
-            keywords:
             show_log:
 
         Returns:
             list[str]: List of package names
         """
         packages = self.list_package(show_log=show_log)
-        packages = [p for p in packages if any([k in p.lower() for k in keywords])]
+        packages = [p for p in packages if p in VALID_PACKAGE or p in VALID_CHANNEL_PACKAGE]
         return packages
 
-    def detect_package(self, keywords=('azurlane', 'blhx'), set_config=True):
+    def detect_package(self, set_config=True):
         """
-        Show all possible packages with the given keyword on this device.
+        Show all game client on this device.
         """
         logger.hr('Detect package')
-        packages = self.list_azurlane_packages(keywords=keywords)
+        packages = self.list_known_packages()
 
         # Show packages
         logger.info(f'Here are the available packages in device "{self.serial}", '
@@ -805,8 +859,8 @@ class Connection(ConnectionAttr):
 
         # Auto package detection
         if len(packages) == 0:
-            logger.critical(f'No {keywords[0]} package found, '
-                            f'please confirm {keywords[0]} has been installed on device "{self.serial}"')
+            logger.critical(f'No AzurLane package found, '
+                            f'please confirm AzurLane has been installed on device "{self.serial}"')
             raise RequestHumanTakeover
         if len(packages) == 1:
             logger.info('Auto package detection found only one package, using it')
@@ -819,6 +873,6 @@ class Connection(ConnectionAttr):
             set_server(self.package)
         else:
             logger.critical(
-                f'Multiple {keywords[0]} packages found, auto package detection cannot decide which to choose, '
+                f'Multiple AzurLane packages found, auto package detection cannot decide which to choose, '
                 'please copy one of the available devices listed above to Alas.Emulator.PackageName')
             raise RequestHumanTakeover

@@ -38,6 +38,8 @@ class Combat(Combat_, MapEventHandler):
             fleet_index (int):
         """
         logger.info('Combat preparation.')
+        self.device.stuck_record_clear()
+        self.device.click_record_clear()
         skip_first_screenshot = True
 
         # if emotion_reduce:
@@ -219,6 +221,8 @@ class Combat(Combat_, MapEventHandler):
             out: combat status
         """
         logger.info('Auto search combat loading')
+        self.device.stuck_record_clear()
+        self.device.click_record_clear()
         self.device.screenshot_interval_set('combat')
         while 1:
             self.device.screenshot()
@@ -236,6 +240,8 @@ class Combat(Combat_, MapEventHandler):
 
         logger.info('Auto Search combat execute')
         self.submarine_call_reset()
+        self.device.stuck_record_clear()
+        self.device.click_record_clear()
         submarine_mode = 'do_not_use'
         if self.config.Submarine_Fleet:
             submarine_mode = self.config.Submarine_Mode
@@ -252,6 +258,9 @@ class Combat(Combat_, MapEventHandler):
                 continue
 
             # End
+            if self.is_in_map():
+                self.device.screenshot_interval_set()
+                break
             if self.is_combat_executing():
                 continue
             if self.handle_auto_search_battle_status():
@@ -262,9 +271,6 @@ class Combat(Combat_, MapEventHandler):
                 continue
             if self.handle_map_event():
                 continue
-            if self.is_in_map():
-                self.device.screenshot_interval_set()
-                break
-
+            
         logger.info('Combat end.')
         return success

@@ -68,8 +68,9 @@ class Config:
     # MAP_HAS_MAZE = True
     MAP_HAS_SIREN = True
     MAP_SIREN_TEMPLATE = ['Warspite', 'Formidable', 'Illustrious']
-    MAP_SWIPE_MULTIPLY = 1.472
-    MAP_SWIPE_MULTIPLY_MINITOUCH = 1.423
+    MAP_SWIPE_MULTIPLY = (0.963, 0.981)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (0.932, 0.949)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (0.904, 0.921)
     INTERNAL_LINES_HOUGHLINES_THRESHOLD = 40
     # EDGE_LINES_HOUGHLINES_THRESHOLD = 40
 
@@ -110,13 +111,16 @@ class Campaign(CampaignBase):
         return True
 
     def battle_7(self):
-        self.fleet_boss.switch_to()
-        self.goto(D7)
-        self.goto(D5)
-        self.goto(D6)
-        self.goto(D5)
-        self.goto(D3)
-        self.goto(D4)
-        self.goto(D3)
-        self.clear_chosen_enemy(D1, expected='boss')
+        if self.fleet_boss_index == 2:
+            self.fleet_boss.switch_to()
+            self.goto(D7)
+            self.goto(D5)
+            self.goto(D6)
+            self.goto(D5)
+            self.goto(D3)
+            self.goto(D4)
+            self.goto(D3)
+            self.clear_chosen_enemy(D1, expected='boss')
+        else:
+            self.clear_chosen_enemy(D1, expected='boss')
         return True

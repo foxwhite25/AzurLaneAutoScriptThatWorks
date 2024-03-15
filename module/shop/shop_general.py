@@ -4,13 +4,14 @@ from module.ocr.ocr import Digit
 from module.shop.assets import *
 from module.shop.base import ShopItemGrid
 from module.shop.clerk import ShopClerk
+from module.shop.shop_status import ShopStatus
 from module.shop.ui import ShopUI
 
 OCR_SHOP_GOLD_COINS = Digit(SHOP_GOLD_COINS, letter=(239, 239, 239), name='OCR_SHOP_GOLD_COINS')
 OCR_SHOP_GEMS = Digit(SHOP_GEMS, letter=(255, 243, 82), name='OCR_SHOP_GEMS')
 
 
-class GeneralShop(ShopClerk, ShopUI):
+class GeneralShop(ShopClerk, ShopUI, ShopStatus):
     gems = 0
     shop_template_folder = './assets/shop/general'
 
@@ -59,27 +60,29 @@ class GeneralShop(ShopClerk, ShopUI):
             int: gold coin amount
         """
         while 1:
-            self._currency = OCR_SHOP_GOLD_COINS.ocr(self.device.image)
-            self.gems = OCR_SHOP_GEMS.ocr(self.device.image)
+            self._currency = self.status_get_gold_coins()
+            self.gems = self.status_get_gems()
             logger.info(f'Gold coins: {self._currency}, Gems: {self.gems}')
 
             if self.currency_rechecked >= 3:
                 logger.warning('Failed to handle fix currency bug in general shop, skip')
                 break
 
-            if self._currency == 0 and self.gems == 0:
-                logger.info('Game bugged, coins and gems disappeared, switch between shops to reset')
-                self.currency_rechecked += 1
-
-                # 2022.06.01 General shop no longer at an expected location
-                # NavBar 'get_active' (0 index-based) and swap with its left
-                # adjacent neighbor then back (NavBar 'set' is 1 index-based)
-                index = self._shop_bottom_navbar.get_active(self)
-                self.shop_bottom_navbar_ensure(left=index)
-                self.shop_bottom_navbar_ensure(left=index + 1)
-                continue
-            else:
-                break
+            # if self._currency == 0 and self.gems == 0:
+            #     logger.info('Game bugged, coins and gems disappeared, switch between shops to reset')
+            #     self.currency_rechecked += 1
+            #
+            #     # 2022.06.01 General shop no longer at an expected location
+            #     # NavBar 'get_active' (0 index-based) and swap with its left
+            #     # adjacent neighbor then back (NavBar 'set' is 1 index-based)
+            #     index = self._shop_bottom_navbar.get_active(self)
+            #     self.shop_bottom_navbar_ensure(left=index)
+            #     self.shop_bottom_navbar_ensure(left=index + 1)
+            #     continue
+            # else:
+            #     break
+            # 2023.07.13 Shop UI changed entirely, remove all these
+            break
 
         return self._currency
 
@@ -106,9 +109,7 @@ class GeneralShop(ShopClerk, ShopUI):
 
     def shop_check_custom_item(self, item):
         """
-        Optional def to check a custom item that
-        cannot be template matched as color and
-        design constantly changes i.e. equip skin box
+        Check a custom item that should be bought with specific option.
 
         Args:
             item: Item to check
@@ -116,8 +117,14 @@ class GeneralShop(ShopClerk, ShopUI):
         Returns:
             bool: whether item is custom
         """
+        if self.config.GeneralShop_ConsumeCoins and self._currency >= 550000:
+            if item.cost == 'Coins':
+                return True
+
         if self.config.GeneralShop_BuySkinBox:
             if (not item.is_known_item()) and item.amount == 1 and item.cost == 'Coins' and item.price == 7000:
+                # check a custom item that cannot be template matched as color
+                # and design constantly changes i.e. equip skin box
                 logger.info(f'Item {item} is considered to be an equip skin box')
                 if self._currency >= item.price:
                     return True

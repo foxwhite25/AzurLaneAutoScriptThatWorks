@@ -13,9 +13,20 @@ from module.ocr.ocr import Digit
 from module.retire.assets import (TEMPLATE_FLEET_1, TEMPLATE_FLEET_2,
                                   TEMPLATE_FLEET_3, TEMPLATE_FLEET_4,
                                   TEMPLATE_FLEET_5, TEMPLATE_FLEET_6,
-                                  TEMPLATE_IN_BATTLE, TEMPLATE_IN_COMMISSION)
+                                  TEMPLATE_IN_BATTLE, TEMPLATE_IN_COMMISSION,
+                                  TEMPLATE_IN_EVENT_FLEET)
 from module.retire.dock import (CARD_EMOTION_GRIDS, CARD_GRIDS,
                                 CARD_LEVEL_GRIDS, CARD_RARITY_GRIDS)
+
+
+class EmotionDigit(Digit):
+    def after_process(self, result):
+        # Random OCR error on Downes' hair
+        # OCR DOCK_EMOTION_OCR: Result "044" is revised to "44"
+        if result == '044' or result == 'D44':
+            result = '0'
+
+        return super().after_process(result)
 
 
 @dataclass(frozen=True)
@@ -121,8 +132,8 @@ class EmotionScanner(Scanner):
         super().__init__()
         self._results = []
         self.grids = CARD_EMOTION_GRIDS
-        self.ocr_model = Digit(self.grids.buttons,
-                               name='DOCK_EMOTION_OCR', threshold=176)
+        self.ocr_model = EmotionDigit(self.grids.buttons,
+                                      name='DOCK_EMOTION_OCR', threshold=176)
 
     def _scan(self, image) -> List:
         return self.ocr_model.ocr(image)
@@ -237,11 +248,12 @@ class StatusScanner(Scanner):
         self.templates = {
             TEMPLATE_IN_BATTLE: 'battle',
             TEMPLATE_IN_COMMISSION: 'commission',
+            TEMPLATE_IN_EVENT_FLEET: 'in_event_fleet',
         }
 
     def _match(self, image) -> str:
         for template, status in self.templates.items():
-            if template.match(image):
+            if template.match(image, similarity=0.75):
                 return status
 
         return 'free'

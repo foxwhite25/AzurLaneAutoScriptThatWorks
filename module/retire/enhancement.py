@@ -2,12 +2,11 @@ from random import choice
 
 from module.base.timer import Timer
 from module.combat.assets import GET_ITEMS_1
-from module.exception import ScriptError
+from module.exception import GameStuckError, ScriptError
 from module.logger import logger
 from module.ocr.ocr import DigitCounter
 from module.retire.assets import *
 from module.retire.dock import CARD_GRIDS, Dock
-
 
 VALID_SHIP_TYPES = ['dd', 'ss', 'cl', 'ca', 'bb', 'cv', 'repair', 'others']
 OCR_DOCK_AMOUNT = DigitCounter(
@@ -17,11 +16,14 @@ OCR_DOCK_AMOUNT = DigitCounter(
 class Enhancement(Dock):
     @property
     def _retire_amount(self):
-        if self.config.Retirement_RetireAmount == 'retire_all':
-            return 2000
-        if self.config.Retirement_RetireAmount == 'retire_10':
-            return 10
-        return 2000
+        if self.config.Retirement_RetireMode == 'one_click_retire':
+            return 3000
+        if self.config.Retirement_RetireMode == 'old_retire':
+            if self.config.OldRetire_RetireAmount == 'retire_all':
+                return 3000
+            if self.config.OldRetire_RetireAmount == 'retire_10':
+                return 10
+        return 3000
 
     def _enhance_enter(self, favourite=False, ship_type=None):
         """
@@ -115,7 +117,7 @@ class Enhancement(Dock):
             True if able to enhance otherwise False
             Always paired with current ship_count
         """
-        need_to_skip : bool = False
+        need_to_skip: bool = False
 
         def state_enhance_check():
             # Check the base case, switch to ready if enhancement can continue
@@ -225,7 +227,7 @@ class Enhancement(Dock):
             state_list.append(state)
             if len(state_list) > 30:
                 logger.critical(f'Too many state transitions: {state_list}')
-                raise ScriptError('Too many state transitions')
+                raise GameStuckError('Too many state transitions')
 
             try:
                 state = locals()[state]()
@@ -254,15 +256,15 @@ class Enhancement(Dock):
             int: total enhanced
         """
         if favourite is None:
-            favourite = self.config.Retirement_EnhanceFavourite
+            favourite = self.config.Enhance_ShipToEnhance == 'favourite'
 
         logger.hr('Enhancement by type')
         total = 0
 
         # Process ENHANCE_ORDER_STRING if any into ship_types
-        if self.config.Retirement_EnhanceFilter is not None:
+        if self.config.Enhance_Filter is not None:
             ship_types = [s.strip().lower()
-                          for s in self.config.Retirement_EnhanceFilter.split('>')]
+                          for s in self.config.Enhance_Filter.split('>')]
             ship_types = list(filter(''.__ne__, ship_types))
             if len(ship_types) == 0:
                 ship_types = [None]
@@ -297,7 +299,7 @@ class Enhancement(Dock):
                 logger.hr(f'Dock Empty by ship type {ship_type}')
                 continue
 
-            current_count = self.config.Retirement_EnhanceCheckPerCategory
+            current_count = self.config.Enhance_CheckPerCategory
             while 1:
                 choose_result, current_count = self._enhance_choose(
                     ship_count=current_count)

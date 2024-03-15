@@ -61,8 +61,9 @@ class Config:
     }
     HOMO_EDGE_COLOR_RANGE = (0, 49)
     HOMO_EDGE_HOUGHLINES_THRESHOLD = 210
-    MAP_SWIPE_MULTIPLY = 1.493
-    MAP_SWIPE_MULTIPLY_MINITOUCH = 1.443
+    MAP_SWIPE_MULTIPLY = (0.977, 0.995)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (0.945, 0.962)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (0.917, 0.934)
 
 
 class Campaign(CampaignBase):
@@ -85,4 +86,4 @@ class Campaign(CampaignBase):
                 if self.clear_roadblocks([road_main]):
                     return True
 
-        return self.fleet_2.clear_boss()
+        return self.fleet_boss.clear_boss()

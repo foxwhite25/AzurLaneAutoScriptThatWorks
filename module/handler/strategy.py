@@ -1,5 +1,4 @@
-import numpy as np
-
+from module.combat.assets import GET_ITEMS_1
 from module.handler.assets import *
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
@@ -7,16 +6,17 @@ from module.template.assets import (TEMPLATE_FORMATION_1, TEMPLATE_FORMATION_2,
                                     TEMPLATE_FORMATION_3)
 from module.ui.switch import Switch
 
-formation = Switch('Formation', offset=120)
+# 2023.10.19, icons on one row increased from 2 to 3
+formation = Switch('Formation', offset=(100, 200))
 formation.add_status('line_ahead', check_button=FORMATION_1)
 formation.add_status('double_line', check_button=FORMATION_2)
 formation.add_status('diamond', check_button=FORMATION_3)
 
-submarine_hunt = Switch('Submarine_hunt', offset=120)
+submarine_hunt = Switch('Submarine_hunt', offset=(200, 200))
 submarine_hunt.add_status('on', check_button=SUBMARINE_HUNT_ON)
 submarine_hunt.add_status('off', check_button=SUBMARINE_HUNT_OFF)
 
-submarine_view = Switch('Submarine_view', offset=120)
+submarine_view = Switch('Submarine_view', offset=(100, 200))
 submarine_view.add_status('on', check_button=SUBMARINE_VIEW_ON)
 submarine_view.add_status('off', check_button=SUBMARINE_VIEW_OFF)
 
@@ -25,27 +25,38 @@ class StrategyHandler(InfoHandler):
     fleet_1_formation_fixed = False
     fleet_2_formation_fixed = False
 
-    def strategy_open(self):
+    def strategy_open(self, skip_first_screenshot=True):
         logger.info('Strategy open')
         while 1:
-            if self.appear(IN_MAP, interval=5) and not self.appear(STRATEGY_OPENED, offset=120):
-                self.device.click(STRATEGY_OPEN)
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
 
             if self.appear(STRATEGY_OPENED, offset=120):
                 break
 
-            self.device.screenshot()
+            if self.appear(IN_MAP, interval=5) and not self.appear(STRATEGY_OPENED, offset=120):
+                self.device.click(STRATEGY_OPEN)
+                continue
 
-    def strategy_close(self):
+            # Handle missed mysteries
+            if self.appear_then_click(GET_ITEMS_1, offset=5):
+                continue
+
+    def strategy_close(self, skip_first_screenshot=True):
         logger.info('Strategy close')
         while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
             if self.appear_then_click(STRATEGY_OPENED, offset=120, interval=5):
-                pass
+                continue
 
             if not self.appear(STRATEGY_OPENED, offset=120):
                 break
-
-            self.device.screenshot()
 
     def strategy_set_execute(self, formation_index=None, sub_view=None, sub_hunt=None):
         """
@@ -70,9 +81,13 @@ class StrategyHandler(InfoHandler):
         if sub_view is not None:
             if submarine_view.appear(main=self):
                 submarine_view.set('on' if sub_view else 'off', main=self)
+            else:
+                logger.warning('Setting up submarine_view but no icon appears')
         if sub_hunt is not None:
             if submarine_hunt.appear(main=self):
                 submarine_hunt.set('on' if sub_hunt else 'off', main=self)
+            else:
+                logger.warning('Setting up submarine_hunt but no icon appears')
 
     def handle_strategy(self, index):
         """

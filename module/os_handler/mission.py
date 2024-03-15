@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 from module.base.timer import Timer
 from module.base.utils import *
 from module.config.utils import get_os_next_reset, DEFAULT_TIME
 from module.logger import logger
 from module.map_detection.utils import fit_points
+from module.os.assets import GLOBE_GOTO_MAP
 from module.os.globe_detection import GLOBE_MAP_SHAPE
 from module.os.globe_operation import GlobeOperation
 from module.os.globe_zone import Zone, ZoneManager
@@ -68,6 +71,10 @@ class MissionHandler(GlobeOperation, ZoneManager):
                 confirm_timer.reset()
                 continue
             if self.handle_info_bar():
+                confirm_timer.reset()
+                continue
+            if self.appear_then_click(GLOBE_GOTO_MAP, offset=(20, 20), interval=2):
+                # Accidentally entered globe
                 confirm_timer.reset()
                 continue
 
@@ -211,12 +218,17 @@ class MissionHandler(GlobeOperation, ZoneManager):
         Returns:
             bool: If task OpsiExplore is under scheduling.
         """
-        enable = self.config.cross_get(keys='OpsiExplore.Scheduler.Enable', default=False)
+        enable = self.config.is_task_enabled('OpsiExplore')
         next_run = self.config.cross_get(keys='OpsiExplore.Scheduler.NextRun', default=DEFAULT_TIME)
         next_reset = get_os_next_reset()
         logger.attr('OpsiNextReset', next_reset)
         logger.attr('OpsiExplore', (enable, next_run))
-        if enable and next_run < next_reset:
+        # -12 hours to handle DST
+        # `next_run` might be calculated before DST but it's DST now
+        # 2023-03-14 11:15:28.423 | INFO | [OpsiNextReset] 2023-04-01 03:00:00
+        # 2023-03-14 11:15:28.425 | INFO | [OpsiExplore] (True, datetime.datetime(2023, 4, 1, 2, 0))
+        # 2023-03-14 11:15:28.426 | INFO | OpsiExplore is still running, accept missions only...
+        if enable and next_run < next_reset - timedelta(hours=12):
             logger.info('OpsiExplore is still running, accept missions only. '
                         'Missions will be finished when OpsiExplore visits every zones, '
                         'no need to worry they are left behind.')

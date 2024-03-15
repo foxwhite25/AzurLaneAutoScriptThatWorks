@@ -16,7 +16,7 @@ from module.exception import RequestHumanTakeover
 from module.logger import logger
 
 from submodule.AlasMaaBridge.module.config.config import ArknightsConfig
-from submodule.AlasMaaBridge.module.handler import asst_backup
+from submodule.AlasMaaBridge.module.asst import asst, utils
 
 
 class AssistantHandler:
@@ -28,9 +28,9 @@ class AssistantHandler:
 
     @staticmethod
     def load(path, incremental_path=None):
-        AssistantHandler.Asst = asst_backup.Asst
-        AssistantHandler.Message = asst_backup.Message
-        AssistantHandler.InstanceOptionType = asst_backup.InstanceOptionType
+        AssistantHandler.Asst = asst.Asst
+        AssistantHandler.Message = utils.Message
+        AssistantHandler.InstanceOptionType = utils.InstanceOptionType
         AssistantHandler.Asst.load(path, user_dir=path, incremental_path=incremental_path)
 
         AssistantHandler.ASST_HANDLER = None
@@ -228,18 +228,22 @@ class AssistantHandler:
             args['stage'] = self.config.MaaFight_CustomStage
         else:
             args['stage'] = self.config.MaaFight_Stage
+
         # Set weekly stage
-        today = get_server_last_update('04:00').strftime('%A')
-        logger.attr('Weekday', today)
-        stage = self.config.__getattribute__(f'MaaFightWeekly_{today}')
-        if stage != 'default':
-            logger.info(f'Using stage setting from {today}: {stage}')
-            args['stage'] = stage
+        if self.config.MaaFightWeekly_Enable:
+            today = get_server_last_update('04:00').strftime('%A')
+            logger.attr('Weekday', today)
+            stage = self.config.__getattribute__(f'MaaFightWeekly_{today}')
+            if stage != 'default':
+                logger.info(f'Using stage setting from {today}: {stage}')
+                args['stage'] = stage
 
         if self.config.MaaFight_Medicine is not None:
             args["medicine"] = self.config.MaaFight_Medicine
-        if self.config.MaaFight_RunOutOfMedicine:
+        if self.config.MaaFight_MedicineTactics == 'run_out':
             args["medicine"] = 999
+        if self.config.MaaFight_MedicineTactics == 'expiring':
+            args["expiring_medicine"] = 999
         if self.config.MaaFight_Stone is not None:
             args["stone"] = self.config.MaaFight_Stone
         if self.config.MaaFight_Times is not None:
@@ -285,6 +289,7 @@ class AssistantHandler:
             else:
                 self.config.task_delay(success=False)
         else:
+            self.config.task_call('MaaAward', force_call=False)
             self.config.task_delay(success=True)
 
     def recruit(self):
@@ -317,67 +322,95 @@ class AssistantHandler:
         self.config.task_delay(success=True)
 
     def infrast(self):
-        # Todo: drom_trust_enabled已经在新版本中改为dorm_trust_enabled，需要在正式版更新之后删除
         args = {
             "facility": self.split_filter(self.config.MaaInfrast_Facility),
             "drones": self.config.MaaInfrast_Drones,
-            "threshold": self.config.MaaInfrast_Threshold,
+            "threshold": self.config.MaaInfrast_WorkThreshold / 24,
             "replenish": self.config.MaaInfrast_Replenish,
             "dorm_notstationed_enabled": self.config.MaaInfrast_Notstationed,
-            "dorm_trust_enabled": self.config.MaaInfrast_Trust,
-            "drom_trust_enabled": self.config.MaaInfrast_Trust
+            "dorm_trust_enabled": self.config.MaaInfrast_Trust
         }
 
-        end_time = datetime.datetime.now() + datetime.timedelta(minutes=30)
         if self.config.MaaCustomInfrast_Enable:
+            infrast_dict = {
+                '153-3': r'resource\custom_infrast\153_layout_3_times_a_day.json',
+                '243-3': r'resource\custom_infrast\243_layout_3_times_a_day.json',
+                '243-4': r'resource\custom_infrast\243_layout_4_times_a_day.json',
+                '252-3': r'resource\custom_infrast\252_layout_3_times_a_day.json',
+                '333-3': r'resource\custom_infrast\333_layout_for_Orundum_3_times_a_day.json'
+            }
+            if self.config.MaaCustomInfrast_BuiltinConfig != 'custom':
+                self.config.MaaCustomInfrast_Filename = os.path.join(
+                    self.config.MaaEmulator_MaaPath,
+                    infrast_dict[self.config.MaaCustomInfrast_BuiltinConfig]
+                )
             args['mode'] = 10000
             args['filename'] = self.config.MaaCustomInfrast_Filename
+
+            end_time = datetime.datetime.now() + datetime.timedelta(minutes=30)
             plans = deep_get(read_file(self.config.MaaCustomInfrast_Filename), keys='plans')
-            for i in range(len(plans)):
-                periods = deep_get(plans[i], keys='period')
-                if periods is None:
+            periods = deep_get(plans[0], keys='period')
+
+            if periods is None:
+                if self.config.MaaCustomInfrast_CustomPeriod == 'null':
                     logger.critical('无法找到配置文件中的排班周期，请检查文件是否有效')
                     raise RequestHumanTakeover
-                for j, period in enumerate(periods):
-                    start_time = datetime.datetime.combine(
-                        datetime.date.today(),
-                        datetime.datetime.strptime(period[0], '%H:%M').time()
-                    )
-                    end_time = datetime.datetime.combine(
-                        datetime.date.today(),
-                        datetime.datetime.strptime(period[1], '%H:%M').time()
-                    )
-                    now_time = datetime.datetime.now()
-                    if start_time <= now_time <= end_time:
-                        args['plan_index'] = i
-                        # 处理跨天的情形
-                        # 如："period": [["22:00", "23:59"], ["00:00","06:00"]]
-                        if j != len(periods) - 1 and period[1] == '23:59' and periods[j + 1][0] == '00:00':
-                            end_time = datetime.datetime.combine(
-                                datetime.date.today() + datetime.timedelta(days=1),
-                                datetime.datetime.strptime(periods[j + 1][1], '%H:%M').time()
-                            )
+                else:
+                    args['plan_index'] = self.config.MaaCustomInfrast_PlanIndex
+            else:
+                for i in range(len(plans)):
+                    periods = deep_get(plans[i], keys='period')
+                    for j, period in enumerate(periods):
+                        start_time = datetime.datetime.combine(
+                            datetime.date.today(),
+                            datetime.datetime.strptime(period[0], '%H:%M').time()
+                        )
+                        end_time = datetime.datetime.combine(
+                            datetime.date.today(),
+                            datetime.datetime.strptime(period[1], '%H:%M').time()
+                        )
+                        now_time = datetime.datetime.now()
+                        if start_time <= now_time <= end_time:
+                            args['plan_index'] = i
+                            # 处理跨天的情形
+                            # 如："period": [["22:00", "23:59"], ["00:00","06:00"]]
+                            if j != len(periods) - 1 and period[1] == '23:59' and periods[j + 1][0] == '00:00':
+                                end_time = datetime.datetime.combine(
+                                    datetime.date.today() + datetime.timedelta(days=1),
+                                    datetime.datetime.strptime(periods[j + 1][1], '%H:%M').time()
+                                )
+                            break
+                    if 'plan_index' in args:
                         break
-                if 'plan_index' in args:
-                    break
 
-        self.maa_start('Infrast', args)
-        if self.config.MaaCustomInfrast_Enable:
-            self.config.task_delay(target=end_time + datetime.timedelta(minutes=1))
+            self.maa_start('Infrast', args)
+            if periods is None:
+                custom_period = self.config.MaaCustomInfrast_CustomPeriod.replace('，', ',').split(',')
+                custom_period = [int(x) for x in custom_period]
+                self.config.task_delay(minute=60 * custom_period[self.config.MaaCustomInfrast_PlanIndex])
+                self.config.MaaCustomInfrast_PlanIndex = (self.config.MaaCustomInfrast_PlanIndex + 1) % len(plans)
+            else:
+                self.config.task_delay(target=end_time + datetime.timedelta(minutes=1))
         else:
+            if self.config.MaaInfrast_WorkThreshold <= self.config.MaaInfrast_ShiftThreshold:
+                logger.warning('基建换班心情阈值必须小于基建工作心情阈值，请调整基建设置')
+                raise RequestHumanTakeover
+
+            self.maa_start('Infrast', args)
             # 根据心情阈值计算下次换班时间
-            # 心情阈值 * 24 / 0.75 * 60
-            self.config.task_delay(minute=self.config.MaaInfrast_Threshold * 1920)
+            # (基建工作心情阈值 - 基建换班心情阈值) / 0.75 * 60
+            t = (self.config.MaaInfrast_WorkThreshold - self.config.MaaInfrast_ShiftThreshold) * 80
+            self.config.task_delay(minute=t)
 
     def mall(self):
         buy_first = self.split_filter(self.config.MaaMall_BuyFirst)
         blacklist = self.split_filter(self.config.MaaMall_BlackList)
         credit_fight = self.config.MaaMall_CreditFight
         if self.config.cross_get(keys='MaaMaterial.MaaFight.Stage') == 'last' \
-                and self.config.cross_get(keys='MaaMaterial.Scheduler.Enable', default=False):
+                and self.config.is_task_enabled('MaaMaterial'):
             credit_fight = False
         if self.config.cross_get(keys='MaaFight.MaaFight.Stage') == 'last' \
-                and self.config.cross_get(keys='MaaFight.Scheduler.Enable', default=False):
+                and self.config.is_task_enabled('MaaFight'):
             credit_fight = False
         self.maa_start('Mall', {
             "credit_fight": credit_fight,
@@ -406,6 +439,10 @@ class AssistantHandler:
         }
         if self.config.MaaRoguelike_CoreChar:
             args["core_char"] = self.config.MaaRoguelike_CoreChar
+        if self.config.MaaRoguelike_Support != 'no_use':
+            args["use_support"] = True
+        if self.config.MaaRoguelike_Support == 'nonfriend_support':
+            args["use_nonfriend_support"] = True
 
         self.task_switch_timer = Timer(30).start()
         self.callback_list.append(self.roguelike_callback)
@@ -414,11 +451,17 @@ class AssistantHandler:
         if self.task_switch_timer is not None:
             self.config.Scheduler_Enable = False
 
+    def reclamation_algorithm(self):
+        self.maa_start('ReclamationAlgorithm', {
+            "enable": True
+        })
+        self.config.task_delay(server_update=True)
+
     def copilot(self):
         filename = self.config.MaaCopilot_FileName
         if filename.startswith('maa://'):
             logger.info('正在从神秘代码中下载作业')
-            r = requests.get(f"https://api.prts.plus/copilot/get/{filename.strip('maa://')}", timeout=30)
+            r = requests.get(f"https://prts.maa.plus/copilot/get/{filename.strip('maa://')}", timeout=30)
             if r.status_code != 200:
                 logger.critical('作业文件下载失败，请检查神秘代码或网络状况')
                 raise RequestHumanTakeover

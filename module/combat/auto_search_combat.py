@@ -12,6 +12,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
     _auto_search_in_stage_timer = Timer(3, count=6)
     _auto_search_status_confirm = False
     auto_search_oil_limit_triggered = False
+    auto_search_coin_limit_triggered = False
 
     def _handle_auto_search_menu_missing(self):
         """
@@ -113,6 +114,33 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
 
         return checked
 
+    def auto_search_watch_coin(self, checked=False):
+        """
+        Watch coin.
+        This will set auto_search_coin_limit_triggered.
+        """
+        if not checked:
+            limit = self.config.TaskBalancer_CoinLimit
+            coin = self.get_coin()
+            if coin == 0:
+                logger.warning('Coin not found')
+            else:
+                if self.is_balancer_task():
+                    if coin < limit:
+                        logger.info('Reach coin limit')
+                        self.auto_search_coin_limit_triggered = True
+                    else:
+                        # Enough coin
+                        self.auto_search_coin_limit_triggered = False
+                else:
+                    if self.auto_search_coin_limit_triggered:
+                        logger.warning('auto_search_coin_limit_triggered but coin recovered, '
+                                       'probably because of wrong OCR result before')
+                    self.auto_search_coin_limit_triggered = False
+                checked = True
+
+        return checked
+
     def _wait_until_in_map(self, skip_first_screenshot=True):
         """
         To handle a bug in Azur Lane game client.
@@ -146,6 +174,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         self.device.stuck_record_clear()
         checked_fleet = False
         checked_oil = False
+        checked_coin = False
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -155,6 +184,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             if self.is_auto_search_running():
                 checked_fleet = self.auto_search_watch_fleet(checked_fleet)
                 checked_oil = self.auto_search_watch_oil(checked_oil)
+                checked_coin = self.auto_search_watch_coin(checked_coin)
             if self.handle_retirement():
                 self.map_offensive_auto_search()
                 continue
@@ -187,6 +217,8 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             out: combat status
         """
         logger.info('Auto search combat loading')
+        self.device.stuck_record_clear()
+        self.device.click_record_clear()
         self.device.screenshot_interval_set('combat')
         while 1:
             self.device.screenshot()
@@ -211,6 +243,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             submarine_mode = self.config.Submarine_Mode
         self.combat_auto_reset()
         self.combat_manual_reset()
+        self.device.stuck_record_clear()
         self.device.click_record_clear()
         if emotion_reduce:
             self.emotion.reduce(fleet_index)
@@ -256,6 +289,8 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             out: is_auto_search_running()
         """
         logger.info('Auto Search combat status')
+        self.device.stuck_record_clear()
+        self.device.click_record_clear()
         exp_info = False  # This is for the white screen bug in game
 
         while 1:
@@ -312,9 +347,8 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         Note that fleet index == 1 is mob fleet, 2 is boss fleet.
         It's not the fleet index in fleet preparation or auto search setting.
         """
-        emotion_reduce = emotion_reduce if emotion_reduce is not None else self.config.Emotion_CalculateEmotion
+        emotion_reduce = emotion_reduce if emotion_reduce is not None else self.emotion.is_calculate
 
-        self.device.stuck_record_clear()
         self.auto_search_combat_execute(emotion_reduce=emotion_reduce, fleet_index=fleet_index)
         self.auto_search_combat_status()
 

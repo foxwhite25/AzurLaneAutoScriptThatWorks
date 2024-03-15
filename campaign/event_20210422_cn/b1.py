@@ -58,9 +58,24 @@ class Config:
     MAP_HAS_AMBUSH = False
     # ===== End of generated config =====
 
+    INTERNAL_LINES_FIND_PEAKS_PARAMETERS = {
+        'height': (80, 255 - 33),
+        'width': (0.9, 10),
+        'prominence': 10,
+        'distance': 35,
+    }
+    EDGE_LINES_FIND_PEAKS_PARAMETERS = {
+        'height': (255 - 33, 255),
+        'prominence': 10,
+        'distance': 50,
+        # 'width': (0, 7),
+        'wlen': 1000
+    }
+    MAP_WALK_USE_CURRENT_FLEET = True
     MAP_HAS_MAZE = True
-    MAP_SWIPE_MULTIPLY = 1.844
-    MAP_SWIPE_MULTIPLY_MINITOUCH = 1.783
+    MAP_SWIPE_MULTIPLY = (1.207, 1.229)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.167, 1.189)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.133, 1.153)
 
 
 class Campaign(CampaignBase):

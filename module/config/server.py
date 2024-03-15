@@ -21,6 +21,8 @@ VALID_CHANNEL_PACKAGE = {
     'com.bilibili.blhx.nearme.gamecenter': ('cn', 'oppo'),
     'com.bilibili.blhx.vivo': ('cn', 'vivo'),
     'com.bilibili.blhx.mz': ('cn', '魅族'),
+    'com.bilibili.blhx.dl': ('cn', '当乐'),
+    'com.bilibili.blhx.lenovo': ('cn', '联想'),
     # 'com.bilibili.blhx.letv': ('cn', '乐视'),  # Not confirmed
     # 'com.bilibili.blhx.gionee': ('cn', '金立'),  # Not confirmed
 
@@ -29,6 +31,7 @@ VALID_CHANNEL_PACKAGE = {
     'com.bilibili.blhx.mzw': ('cn', '拇指玩'),
     'com.yiwu.blhx.yx15': ('cn', '一五游戏'),
     'com.bilibili.blhx.m4399': ('cn', '4399'),
+    'com.bilibili.blhx.bilibiliMove': ('cn', '迁移'),
 
     # Tw
     'com.hkmanjuu.azurlane.gp.mc': ('tw', 'MyCard'),
@@ -40,17 +43,18 @@ VALID_SERVER_LIST = {
         '杜立特空袭', '地狱犬行动', '开罗宣言', '奥林匹克行动',
         '小王冠行动', '波茨坦公告', '白色方案', '瓦尔基里行动',
         '曼哈顿计划', '八月风暴', '秋季旅行', '水星行动', '莱茵河卫兵',
-        '北极光计划'
+        '北极光计划', '长戟计划'
     ],
     'cn_ios': [
         '夏威夷', '珊瑚海', '中途岛', '铁底湾', '所罗门', '马里亚纳',
         '莱特湾', '硫磺岛', '冲绳岛', '阿留申群岛', '马耳他'
     ],
     'cn_channel': [
-        '皇家巡游', '大西洋宪章', '十字军行动', '龙骑兵行动'
+        '皇家巡游', '大西洋宪章', '十字军行动', '龙骑兵行动', '冥王星行动'
     ],
     'en': [
-        'Avrora', 'Lexington', 'Sandy', 'Washington', 'Amagi'
+        'Avrora', 'Lexington', 'Sandy', 'Washington', 'Amagi',
+        'Little Enterprise'
     ],
     'jp': [
         'ブレスト', '横須賀', '佐世保', '呉', '舞鶴',

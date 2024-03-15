@@ -4,6 +4,8 @@ from module.logger import logger
 from module.os.assets import *
 from module.os_handler.action_point import ActionPointHandler
 from module.os_handler.assets import AUTO_SEARCH_REWARD
+from module.os_handler.port import PORT_CHECK
+from module.ui.assets import BACK_ARROW
 
 ZONE_TYPES = [ZONE_DANGEROUS, ZONE_SAFE, ZONE_OBSCURE, ZONE_ABYSSAL, ZONE_STRONGHOLD, ZONE_ARCHIVE]
 ZONE_SELECT = [SELECT_DANGEROUS, SELECT_SAFE, SELECT_OBSCURE, SELECT_ABYSSAL, SELECT_STRONGHOLD, SELECT_ARCHIVE]
@@ -297,6 +299,10 @@ class GlobeOperation(ActionPointHandler):
             else:
                 self.device.screenshot()
 
+            # End
+            if self.is_in_globe():
+                break
+
             if self.appear_then_click(MAP_GOTO_GLOBE, offset=(200, 5), interval=5):
                 # Just to initialize interval timer of MAP_GOTO_GLOBE_FOG
                 self.appear(MAP_GOTO_GLOBE_FOG, interval=5)
@@ -315,6 +321,11 @@ class GlobeOperation(ActionPointHandler):
                 continue
             if self.handle_map_event():
                 continue
+            # Accidentally entered port
+            if self.appear(PORT_CHECK, offset=(20, 20), interval=5):
+                logger.info(f'Page switch: {PORT_CHECK} -> {BACK_ARROW}')
+                self.device.click(BACK_ARROW)
+                continue
             # Popup: AUTO_SEARCH_REWARD appears slowly
             if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=5):
                 continue
@@ -323,10 +334,6 @@ class GlobeOperation(ActionPointHandler):
             # Searching reward will be shown after entering another zone.
             if self.handle_popup_confirm('GOTO_GLOBE'):
                 continue
-
-            # End
-            if self.is_in_globe():
-                break
 
         skip_first_screenshot = True
         confirm_timer = Timer(1, count=2).start()
@@ -394,4 +401,7 @@ class GlobeOperation(ActionPointHandler):
             if self.handle_map_event():
                 continue
             if self.handle_popup_confirm('GLOBE_ENTER'):
+                continue
+            # A game bug that AUTO_SEARCH_REWARD from the last cleared zone popups
+            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=3):
                 continue

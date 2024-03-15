@@ -5,9 +5,9 @@ import adbutils
 import uiautomator2 as u2
 from adbutils import AdbClient, AdbDevice
 
-from deploy.utils import DEPLOY_CONFIG, poor_yaml_read
 from module.base.decorator import cached_property
 from module.config.config import AzurLaneConfig
+from module.config.env import IS_ON_PHONE_CLOUD
 from module.config.utils import deep_iter
 from module.exception import RequestHumanTakeover
 from module.logger import logger
@@ -34,6 +34,8 @@ class ConnectionAttr:
         else:
             self.config = config
 
+        logger.attr('IS_ON_PHONE_CLOUD', IS_ON_PHONE_CLOUD)
+
         # Init adb client
         logger.attr('AdbBinary', self.adb_binary)
         # Monkey patch to custom adb
@@ -52,10 +54,38 @@ class ConnectionAttr:
         self.serial_check()
         self.config.DEVICE_OVER_HTTP = self.is_over_http
 
+    @staticmethod
+    def revise_serial(serial):
+        serial = serial.replace(' ', '')
+        # 127。0。0。1：5555
+        serial = serial.replace('。', '.').replace('，', '.').replace(',', '.').replace('：', ':')
+        # 127.0.0.1.5555
+        serial = serial.replace('127.0.0.1.', '127.0.0.1:')
+        # 16384
+        try:
+            port = int(serial)
+            if 1000 < port < 65536:
+                serial = f'127.0.0.1:{port}'
+        except ValueError:
+            pass
+        # 夜神模拟器 127.0.0.1:62001
+        # MuMu模拟器12127.0.0.1:16384
+        if '模拟' in serial:
+            res = re.search(r'(127\.\d+\.\d+\.\d+:\d+)', serial)
+            if res:
+                serial = res.group(1)
+        return str(serial)
+
     def serial_check(self):
         """
         serial check
         """
+        # fool-proof
+        new = self.revise_serial(self.serial)
+        if new != self.serial:
+            logger.warning(f'Serial "{self.config.Emulator_Serial}" is revised to "{new}"')
+            self.config.Emulator_Serial = new
+            self.serial = new
         if self.is_bluestacks4_hyperv:
             self.serial = self.find_bluestacks4_hyperv(self.serial)
         if self.is_bluestacks5_hyperv:
@@ -99,7 +129,9 @@ class ConnectionAttr:
 
     @cached_property
     def is_mumu_family(self):
-        return self.serial == '127.0.0.1:7555'
+        # 127.0.0.1:7555
+        # 127.0.0.1:16384 + 32*n
+        return self.serial == '127.0.0.1:7555' or self.serial.startswith('127.0.0.1:16')
 
     @cached_property
     def is_emulator(self):
@@ -112,6 +144,12 @@ class ConnectionAttr:
     @cached_property
     def is_over_http(self):
         return bool(re.match(r"^https?://", self.serial))
+
+    @cached_property
+    def is_chinac_phone_cloud(self):
+        # Phone cloud with public ADB connection
+        # Serial like xxx.xxx.xxx.xxx:301
+        return bool(re.search(r":30[0-9]$", self.serial))
 
     @staticmethod
     def find_bluestacks4_hyperv(serial):
@@ -164,9 +202,9 @@ class ConnectionAttr:
         logger.info("Reading Realtime adb port")
 
         if serial == "bluestacks5-hyperv":
-            parameter_name = r"bst\.instance\.Nougat64\.status\.adb_port"
+            parameter_name = r"bst\.instance\.(Nougat64|Pie64|Rvc64)\.status\.adb_port"
         else:
-            parameter_name = rf"bst\.instance\.Nougat64_{serial[19:]}\.status.adb_port"
+            parameter_name = rf"bst\.instance\.(Nougat64|Pie64|Rvc64)_{serial[19:]}\.status.adb_port"
 
         try:
             with OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt") as key:
@@ -188,26 +226,33 @@ class ConnectionAttr:
         if port is None:
             logger.warning(f"Did not match the result: {serial}.")
             raise RequestHumanTakeover
-        port = port.group(1)
+        port = port.group(2)
         logger.info(f"Match to dynamic port: {port}")
         return f"127.0.0.1:{port}"
 
     @cached_property
     def adb_binary(self):
         # Try adb in deploy.yaml
-        config = poor_yaml_read(DEPLOY_CONFIG)
-        if 'AdbExecutable' in config:
-            file = config['AdbExecutable'].replace('\\', '/')
-            if os.path.exists(file):
-                return os.path.abspath(file)
+        from module.webui.setting import State
+        file = State.deploy_config.AdbExecutable
+        file = file.replace('\\', '/')
+        if os.path.exists(file):
+            return os.path.abspath(file)
 
         # Try existing adb.exe
         for file in self.adb_binary_list:
             if os.path.exists(file):
                 return os.path.abspath(file)
 
-        # Use adb.exe in system PATH
-        file = 'adb.exe'
+        # Try adb in python environment
+        import sys
+        file = os.path.join(sys.executable, '../Lib/site-packages/adbutils/binaries/adb.exe')
+        file = os.path.abspath(file).replace('\\', '/')
+        if os.path.exists(file):
+            return file
+
+        # Use adb in system PATH
+        file = 'adb'
         return file
 
     @cached_property

@@ -285,8 +285,11 @@ class FastForwardHandler(AutoSearchHandler):
         if self.appear(AUTO_SEARCH_MENU_CONTINUE, offset=self._auto_search_menu_offset, interval=2):
             self.map_is_2x_book = self.config.Campaign_Use2xBook
             self.handle_2x_book_setting(mode='auto')
-            self.device.click(AUTO_SEARCH_MENU_CONTINUE)
-            self.interval_reset(AUTO_SEARCH_MENU_CONTINUE)
+            if self.appear_then_click(AUTO_SEARCH_MENU_CONTINUE, offset=self._auto_search_menu_offset):
+                self.interval_reset(AUTO_SEARCH_MENU_CONTINUE)
+            else:
+                # AUTO_SEARCH_MENU_CONTINUE disappeared after handle_2x_book_setting()
+                pass
             return True
         return False
 
@@ -472,3 +475,30 @@ class FastForwardHandler(AutoSearchHandler):
                 return True
 
         return False
+
+    def handle_map_walk_speedup(self, skip_first_screenshot=True):
+        """
+        Turn on walk speedup, no reason to turn it off
+        """
+        if not self.config.MAP_HAS_WALK_SPEEDUP:
+            return False
+
+        timeout = Timer(2, count=4).start()
+        interval = Timer(1, count=2)
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if self.image_color_count(MAP_WALK_SPEEDUP, color=(132, 255, 148), threshold=180, count=50):
+                logger.attr('Walk_Speedup', 'on')
+                return True
+            if timeout.reached():
+                logger.warning(f'Wait time has expired; Cannot set map walk speedup')
+                return False
+
+            if interval.reached():
+                self.device.click(MAP_WALK_SPEEDUP)
+                interval.reset()
+                continue

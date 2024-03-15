@@ -1,8 +1,6 @@
-**| English | [Chinese](README.md) |**
+**| English | [简体中文](README.md) | [日本語](README_jp.md) |**
 
 # AzurLaneAutoScript
-
-#### Discord [![](https://img.shields.io/discord/720789890354249748?logo=discord&logoColor=ffffff&color=4e4c97)](https://discord.gg/AQN6GeJ) QQ Group ![](https://img.shields.io/badge/QQ%20Group-1087735381-4e4c97)
 
 Azur Lane bot with GUI (Supports CN, EN, JP, TW, able to support other servers), designed for 24/7 running scenes, can take over almost all Azur Lane gameplay. Azur Lane, as a mobile game, has entered the late stage of its life cycle. During the period from now to the server down, please reduce the time spent on the Azur Lane and leave everything to Alas.
 
@@ -22,7 +20,7 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 
 
 
-## Features  
+## Features
 
 - **Farm**: Main chapter, events, raids, 1-1 affinity farming, 7-2 mystery farming, 12-2 medium leveling, 12-4 large leveling, gems farming.
 - **Reward**: Commission, tactical class, research, dorm, meowfficer, guild, missions, shop, shipyard, gacha, data key.
@@ -43,7 +41,34 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 
 Refers to [Installation tutorial](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Installation_en), including easy-installer manual, use manual, manual installation tutorial, remote access manul.
 
+## Modify Game Settings
 
+Modify the in-game settings according to this table.
+
+|                    Name                    |   Value   |
+|:------------------------------------------:|:---------:|
+|            Frame Rate Settings             |  60 FPS   |
+|         OpSi - Reduce TB Guidance          |    On     |
+|   OpSi - Auto use items during Auto Mode   |    On     |
+| OpSi - Default to Auto Mode in Threat Safe |    Off    |
+|               Story Autoplay               |  Enable   |
+|           Text Auto-Scroll Speed           | Very Fast |
+
+Operation Siren => Navigation Orders => Submarine Support:
+
+|              Name             | Value |
+|:-----------------------------:|:-----:|
+| Automatically call submarines |  Off  |
+
+Main Page => Build =>  Retirement => Quick Retire Options(left gear icon)：
+
+|                Name                |                  Value                  |
+|:----------------------------------:|:---------------------------------------:|
+|        Prioritize Rarity 1         |                    R                    |
+|        Prioritize Rarity 2         |                    E                    |
+|        Prioritize Rarity 3         |                    N                    |
+|   「own」a fully Limit Broken ship   |               Don't Keep                |
+| 「has not」a fully Limit Broken ship | `Keep Enough to Max LB` or `Don't Keep` |
 
 ## How to Report Bugs
 
@@ -107,3 +132,6 @@ Oh yeah, don't forget to read the [development documentation](https://github.com
 - [PyWebIO](https://github.com/pywebio/PyWebIO), GUI framework that Alas uses.
 - [MaaAssistantArknights](https://github.com/MaaAssistantArknights/MaaAssistantArknights), an Arknights assistant based on image recognition, helps you to complete daily quests efficiently! -> [MAA submodule tutorial](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/submodule_maa_cn)
 
+## Contact Us
+
+- Discord: [https://discord.gg/AQN6GeJ](https://discord.gg/AQN6GeJ)

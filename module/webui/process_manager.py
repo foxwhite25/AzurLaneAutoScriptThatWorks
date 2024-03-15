@@ -1,16 +1,19 @@
+import argparse
 import os
 import queue
 import threading
 from multiprocessing import Process
 from typing import Dict, List, Union
 
+import inflection
 from filelock import FileLock
+from rich.console import Console, ConsoleRenderable
+
 from module.config.utils import filepath_config
 from module.logger import logger, set_file_logger, set_func_logger
 from module.submodule.submodule import load_mod
-from module.submodule.utils import get_config_mod, mod_instance
+from module.submodule.utils import get_available_mod, get_available_mod_func, get_config_mod, get_func_mod, list_mod_instance
 from module.webui.setting import State
-from rich.console import Console, ConsoleRenderable
 
 
 class ProcessManager:
@@ -119,8 +122,20 @@ class ProcessManager:
     def run_process(
         config_name, func: str, q: queue.Queue, e: threading.Event = None
     ) -> None:
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--electron", action="store_true", help="Runs by electron client."
+        )
+        args, _ = parser.parse_known_args()
+        State.electron = args.electron
+
         # Setup logger
         set_file_logger(name=config_name)
+        if State.electron:
+            # https://github.com/LmeSzinc/AzurLaneAutoScript/issues/2051
+            logger.info("Electron detected, remove log output to stdout")
+            from module.logger import console_hdlr
+            logger.removeHandler(console_hdlr)
         set_func_logger(func=q.put)
 
         from module.config.config import AzurLaneConfig
@@ -147,22 +162,21 @@ class ProcessManager:
 
                 AzurLaneUncensored(config=config_name, task="AzurLaneUncensored").run()
             elif func == "Benchmark":
-                from module.daemon.benchmark import Benchmark
+                from module.daemon.benchmark import run_benchmark
 
-                Benchmark(config=config_name, task="Benchmark").run()
+                run_benchmark(config=config_name)
             elif func == "GameManager":
                 from module.daemon.game_manager import GameManager
 
                 GameManager(config=config_name, task="GameManager").run()
-            elif func == 'maa':
-                mod = load_mod('maa')
+            elif func in get_available_mod():
+                mod = load_mod(func)
 
                 if e is not None:
                     mod.set_stop_event(e)
                 mod.loop(config_name)
-            elif func == "MaaCopilot":
-                mod = load_mod('maa')
-                mod.maa_copilot(config_name)
+            elif func in get_available_mod_func():
+                getattr(load_mod(get_func_mod(func)), inflection.underscore(func))(config_name)
             else:
                 logger.critical(f"No function matched: {func}")
             logger.info(f"[{config_name}] exited. Reason: Finish\n")
@@ -188,7 +202,7 @@ class ProcessManager:
         logger.hr("Restart alas")
 
         # Load MOD_CONFIG_DICT
-        mod_instance()
+        list_mod_instance()
 
         if instances is None:
             instances = []

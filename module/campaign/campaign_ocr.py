@@ -30,7 +30,7 @@ class CampaignOcr(ModuleBase):
         else:
             if name.isdigit():
                 return int(name)
-            elif name in ['a', 'c', 'as', 'cs', 't', 'sp', 'ex_sp']:
+            elif name in ['a', 'c', 'as', 'cs', 't', 'ht', 'ts', 'hts', 'sp', 'ex_sp']:
                 return 1
             elif name in ['b', 'd', 'bs', 'ds', 'ex_ex']:
                 return 2
@@ -56,6 +56,7 @@ class CampaignOcr(ModuleBase):
         Returns:
             tuple[str]: Campaign_name and stage index in lowercase, Such as ['7', '2'], ['d', '3'], ['sp', '3'].
         """
+        name = name.strip('-')
         if name == 'sp':
             return 'ex_sp', '1'
         elif name.startswith('extra'):
@@ -66,9 +67,13 @@ class CampaignOcr(ModuleBase):
             return 'sp', name[-1]
         elif name[-1].isdigit():
             return name[:-1], name[-1]
+        elif name[0].isdigit() and name[-1].isalpha():
+            # 49X
+            logger.warning(f'Unknown stage name: {name}')
+            return '', ''
 
         logger.warning(f'Unknown stage name: {name}')
-        return name[0], name[1:]
+        return '', ''
 
     def campaign_match_multi(self, template, image, stage_image=None, name_offset=(75, 9), name_size=(60, 16),
                              name_letter=(255, 255, 255), name_thresh=128, similarity=0.85):
@@ -148,6 +153,18 @@ class CampaignOcr(ModuleBase):
                 image, extract_letters(self._stage_image, letter=(99, 223, 239), threshold=153),
                 name_offset=(60, 12), name_size=(60, 16)
             )
+        if 'green' in self.config.STAGE_ENTRANCE:
+            digits += self.campaign_match_multi(
+                TEMPLATE_STAGE_GREEN_CLEAR,
+                image, self._stage_image_gray,
+                name_offset=(60, 0), name_size=(60, 22)
+            )
+            digits += self.campaign_match_multi(
+                TEMPLATE_STAGE_PERCENT,
+                image, self._stage_image_gray,
+                similarity=0.6,
+                name_offset=(52, 0), name_size=(60, 22)
+            )
 
         return digits
 
@@ -192,6 +209,18 @@ class CampaignOcr(ModuleBase):
                 TEMPLATE_STAGE_BLUE_CLEAR,
                 image, extract_letters(self._stage_image, letter=(99, 223, 239), threshold=153),
                 name_offset=(60, 12), name_size=(60, 16)
+            )
+        if 'green' in self.config.STAGE_ENTRANCE:
+            digits += self.campaign_match_multi(
+                TEMPLATE_STAGE_GREEN_CLEAR,
+                image, self._stage_image_gray,
+                name_offset=(60, 0), name_size=(60, 22)
+            )
+            digits += self.campaign_match_multi(
+                TEMPLATE_STAGE_PERCENT,
+                image, self._stage_image_gray,
+                similarity=0.6,
+                name_offset=(52, 0), name_size=(60, 22)
             )
 
         return digits
@@ -241,13 +270,17 @@ class CampaignOcr(ModuleBase):
             result = [result]
         result = [self._campaign_ocr_result_process(res) for res in result]
 
-        chapter = [self._campaign_separate_name(res)[0] for res in result]
+        chapter = [self._campaign_separate_name(res)[0] for res in result if res]
         chapter = list(filter(('').__ne__, chapter))
         if not chapter:
             raise CampaignNameError
 
         counter = collections.Counter(chapter)
         self.campaign_chapter = counter.most_common()[0][0]
+
+        if self.campaign_chapter == 0 or self.campaign_chapter == '0':
+            # ['0F', 'F-IB', 'IGI']
+            raise CampaignNameError
 
         # After OCR, recover button attributes.
         # These buttons are ready to be stage entrances for `MapOperation.enter_map()`

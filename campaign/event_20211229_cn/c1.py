@@ -54,20 +54,21 @@ class Config:
     # ===== End of generated config =====
 
     INTERNAL_LINES_FIND_PEAKS_PARAMETERS = {
-        'height': (150, 255 - 24),
+        'height': (150, 255 - 17),
         'width': (0.9, 10),
         'prominence': 10,
         'distance': 35,
     }
     EDGE_LINES_FIND_PEAKS_PARAMETERS = {
-        'height': (255 - 24, 255),
+        'height': (255 - 17, 255),
         'prominence': 10,
         'distance': 50,
         'wlen': 1000
     }
     HOMO_EDGE_COLOR_RANGE = (0, 17)
-    MAP_SWIPE_MULTIPLY = 1.743
-    MAP_SWIPE_MULTIPLY_MINITOUCH = 1.685
+    MAP_SWIPE_MULTIPLY = (1.141, 1.162)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.103, 1.123)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.071, 1.090)
     MAP_ENSURE_EDGE_INSIGHT_CORNER = 'bottom'
     MAP_WALK_USE_CURRENT_FLEET = True
 

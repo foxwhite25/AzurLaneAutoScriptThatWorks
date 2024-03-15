@@ -1,262 +1,266 @@
 {
   "Menu": {
-    "Task": {
-      "name": "Menu.Task.name",
-      "help": "Menu.Task.help"
-    },
     "Alas": {
-      "name": "Menu.Alas.name",
-      "help": "Menu.Alas.help"
+      "name": "Alas",
+      "help": ""
     },
     "Farm": {
-      "name": "Menu.Farm.name",
-      "help": "Menu.Farm.help"
+      "name": "出撃",
+      "help": ""
     },
     "Event": {
-      "name": "Menu.Event.name",
-      "help": "Menu.Event.help"
+      "name": "イベント",
+      "help": ""
+    },
+    "EventDaily": {
+      "name": "Menu.EventDaily.name",
+      "help": "Menu.EventDaily.help"
     },
     "Reward": {
-      "name": "Menu.Reward.name",
-      "help": "Menu.Reward.help"
-    },
-    "DailyReward": {
-      "name": "Menu.DailyReward.name",
-      "help": "Menu.DailyReward.help"
+      "name": "収穫",
+      "help": ""
     },
     "DailyMission": {
-      "name": "Menu.DailyMission.name",
-      "help": "Menu.DailyMission.help"
+      "name": "日課任務",
+      "help": ""
     },
     "Opsi": {
-      "name": "Menu.Opsi.name",
-      "help": "Menu.Opsi.help"
+      "name": "セイレーン作戦",
+      "help": ""
     },
     "Tool": {
-      "name": "Menu.Tool.name",
-      "help": "Menu.Tool.help"
+      "name": "ツール",
+      "help": ""
     }
   },
   "Task": {
     "Alas": {
-      "name": "Task.Alas.name",
-      "help": "Task.Alas.help"
+      "name": "Alas設定",
+      "help": ""
     },
     "General": {
-      "name": "Task.General.name",
-      "help": "Task.General.help"
+      "name": "通用設定",
+      "help": ""
     },
     "Restart": {
-      "name": "Task.Restart.name",
-      "help": "Task.Restart.help"
+      "name": "再起動設定",
+      "help": ""
     },
     "Main": {
-      "name": "Task.Main.name",
-      "help": "Task.Main.help"
+      "name": "メイン海域",
+      "help": ""
     },
     "Main2": {
-      "name": "Task.Main2.name",
-      "help": "Task.Main2.help"
+      "name": "メイン海域-2",
+      "help": ""
     },
     "Main3": {
-      "name": "Task.Main3.name",
-      "help": "Task.Main3.help"
+      "name": "メイン海域-3",
+      "help": ""
     },
     "GemsFarming": {
-      "name": "Task.GemsFarming.name",
-      "help": "Task.GemsFarming.help"
+      "name": "Commission Farming",
+      "help": ""
     },
     "EventGeneral": {
-      "name": "Task.EventGeneral.name",
-      "help": "Task.EventGeneral.help"
+      "name": "イベント共通設定",
+      "help": ""
     },
     "Event": {
-      "name": "Task.Event.name",
-      "help": "Task.Event.help"
+      "name": "イベント海域",
+      "help": ""
     },
     "Event2": {
-      "name": "Task.Event2.name",
-      "help": "Task.Event2.help"
-    },
-    "EventA": {
-      "name": "Task.EventA.name",
-      "help": "Task.EventA.help"
-    },
-    "EventB": {
-      "name": "Task.EventB.name",
-      "help": "Task.EventB.help"
-    },
-    "EventC": {
-      "name": "Task.EventC.name",
-      "help": "Task.EventC.help"
-    },
-    "EventD": {
-      "name": "Task.EventD.name",
-      "help": "Task.EventD.help"
-    },
-    "EventSp": {
-      "name": "Task.EventSp.name",
-      "help": "Task.EventSp.help"
+      "name": "イベント海域-2",
+      "help": ""
     },
     "Raid": {
-      "name": "Task.Raid.name",
-      "help": "Task.Raid.help"
+      "name": "Raid",
+      "help": ""
     },
-    "RaidDaily": {
-      "name": "Task.RaidDaily.name",
-      "help": "Task.RaidDaily.help"
+    "Coalition": {
+      "name": "Task.Coalition.name",
+      "help": "Task.Coalition.help"
     },
     "MaritimeEscort": {
-      "name": "Task.MaritimeEscort.name",
-      "help": "Task.MaritimeEscort.help"
-    },
-    "Commission": {
-      "name": "Task.Commission.name",
-      "help": "Task.Commission.help"
-    },
-    "Tactical": {
-      "name": "Task.Tactical.name",
-      "help": "Task.Tactical.help"
-    },
-    "Research": {
-      "name": "Task.Research.name",
-      "help": "Task.Research.help"
-    },
-    "Dorm": {
-      "name": "Task.Dorm.name",
-      "help": "Task.Dorm.help"
-    },
-    "Meowfficer": {
-      "name": "Task.Meowfficer.name",
-      "help": "Task.Meowfficer.help"
-    },
-    "Guild": {
-      "name": "Task.Guild.name",
-      "help": "Task.Guild.help"
-    },
-    "Reward": {
-      "name": "Task.Reward.name",
-      "help": "Task.Reward.help"
-    },
-    "ShopFrequent": {
-      "name": "Task.ShopFrequent.name",
-      "help": "Task.ShopFrequent.help"
-    },
-    "ShopOnce": {
-      "name": "Task.ShopOnce.name",
-      "help": "Task.ShopOnce.help"
-    },
-    "Shipyard": {
-      "name": "Task.Shipyard.name",
-      "help": "Task.Shipyard.help"
-    },
-    "Gacha": {
-      "name": "Task.Gacha.name",
-      "help": "Task.Gacha.help"
-    },
-    "Freebies": {
-      "name": "Task.Freebies.name",
-      "help": "Task.Freebies.help"
-    },
-    "Daily": {
-      "name": "Task.Daily.name",
-      "help": "Task.Daily.help"
-    },
-    "Hard": {
-      "name": "Task.Hard.name",
-      "help": "Task.Hard.help"
-    },
-    "Exercise": {
-      "name": "Task.Exercise.name",
-      "help": "Task.Exercise.help"
-    },
-    "Sos": {
-      "name": "Task.Sos.name",
-      "help": "Task.Sos.help"
+      "name": "Maritime Escort",
+      "help": ""
     },
     "WarArchives": {
-      "name": "Task.WarArchives.name",
-      "help": "Task.WarArchives.help"
+      "name": "作戦履歴",
+      "help": ""
+    },
+    "EventA": {
+      "name": "毎日イベント海域A",
+      "help": ""
+    },
+    "EventB": {
+      "name": "毎日イベント海域B",
+      "help": ""
+    },
+    "EventC": {
+      "name": "毎日イベント海域C",
+      "help": ""
+    },
+    "EventD": {
+      "name": "毎日イベント海域D",
+      "help": ""
+    },
+    "EventSp": {
+      "name": "毎日イベント海域SP",
+      "help": ""
+    },
+    "RaidDaily": {
+      "name": "Raid Daily",
+      "help": ""
+    },
+    "CoalitionSp": {
+      "name": "Task.CoalitionSp.name",
+      "help": "Task.CoalitionSp.help"
+    },
+    "Commission": {
+      "name": "委託",
+      "help": ""
+    },
+    "Tactical": {
+      "name": "戦術教室",
+      "help": ""
+    },
+    "Research": {
+      "name": "研究",
+      "help": ""
+    },
+    "Dorm": {
+      "name": "寮舎",
+      "help": ""
+    },
+    "Meowfficer": {
+      "name": "オフニャ",
+      "help": ""
+    },
+    "Guild": {
+      "name": "大艦隊",
+      "help": ""
+    },
+    "Reward": {
+      "name": "収穫",
+      "help": ""
+    },
+    "Daily": {
+      "name": "デイリー",
+      "help": ""
+    },
+    "Hard": {
+      "name": "ハード海域",
+      "help": ""
+    },
+    "Exercise": {
+      "name": "演習",
+      "help": ""
+    },
+    "ShopFrequent": {
+      "name": "一般ショップ",
+      "help": ""
+    },
+    "ShopOnce": {
+      "name": "他ショップ",
+      "help": ""
+    },
+    "Shipyard": {
+      "name": "開発ドック",
+      "help": ""
+    },
+    "Gacha": {
+      "name": "毎日建造",
+      "help": ""
+    },
+    "Freebies": {
+      "name": "他ギフト",
+      "help": ""
+    },
+    "Minigame": {
+      "name": "Task.Minigame.name",
+      "help": "Task.Minigame.help"
     },
     "OpsiGeneral": {
-      "name": "Task.OpsiGeneral.name",
-      "help": "Task.OpsiGeneral.help"
+      "name": "一般設定",
+      "help": ""
     },
     "OpsiAshBeacon": {
-      "name": "Task.OpsiAshBeacon.name",
-      "help": "Task.OpsiAshBeacon.help"
+      "name": "Ash Beacon",
+      "help": ""
     },
     "OpsiAshAssist": {
-      "name": "Task.OpsiAshAssist.name",
-      "help": "Task.OpsiAshAssist.help"
+      "name": "OpSi Ash Assist",
+      "help": ""
     },
     "OpsiExplore": {
-      "name": "Task.OpsiExplore.name",
-      "help": "Task.OpsiExplore.help"
+      "name": "OpSi Explore",
+      "help": ""
     },
     "OpsiShop": {
-      "name": "Task.OpsiShop.name",
-      "help": "Task.OpsiShop.help"
+      "name": "OpSi Shop",
+      "help": ""
     },
     "OpsiVoucher": {
-      "name": "Task.OpsiVoucher.name",
-      "help": "Task.OpsiVoucher.help"
+      "name": "OpSi Voucher",
+      "help": ""
     },
     "OpsiDaily": {
-      "name": "Task.OpsiDaily.name",
-      "help": "Task.OpsiDaily.help"
+      "name": "OpSi Daily",
+      "help": ""
     },
     "OpsiObscure": {
-      "name": "Task.OpsiObscure.name",
-      "help": "Task.OpsiObscure.help"
+      "name": "Obscure Zones",
+      "help": ""
     },
     "OpsiAbyssal": {
-      "name": "Task.OpsiAbyssal.name",
-      "help": "Task.OpsiAbyssal.help"
+      "name": "Abyssal Zones",
+      "help": ""
     },
     "OpsiArchive": {
-      "name": "Task.OpsiArchive.name",
-      "help": "Task.OpsiArchive.help"
+      "name": "Archive Zones",
+      "help": "Clear archive zones. Archive zones are AP free.\nThe following must be satisfied:\n- OpSi story must be complete\n- Task OpSi Explore enabled or consuming 5000 oil for special radar in OpSi voucher shop"
     },
     "OpsiStronghold": {
-      "name": "Task.OpsiStronghold.name",
-      "help": "Task.OpsiStronghold.help"
+      "name": "Siren Strongholds",
+      "help": ""
     },
     "OpsiMonthBoss": {
-      "name": "Task.OpsiMonthBoss.name",
-      "help": "Task.OpsiMonthBoss.help"
+      "name": "Monthly Boss",
+      "help": "To clear (easy/difficult) monthly bosses, the following conditions must be met to use this function:\n- Clear the main task of the big world\n- Enable the Great World Land Reclamation Mission or use the Battle Information Recorder (5000 oil props)\nIf the easy difficulty fails, the attack will be repeated according to the submarine settings; if the difficult difficulty fails, the mission will be terminated directly"
     },
     "OpsiMeowfficerFarming": {
-      "name": "Task.OpsiMeowfficerFarming.name",
-      "help": "Task.OpsiMeowfficerFarming.help"
+      "name": "Meowfficer Farming",
+      "help": ""
     },
     "OpsiHazard1Leveling": {
-      "name": "Task.OpsiHazard1Leveling.name",
-      "help": "Task.OpsiHazard1Leveling.help"
+      "name": "CL1 Leveling",
+      "help": ""
     },
     "OpsiCrossMonth": {
-      "name": "Task.OpsiCrossMonth.name",
-      "help": "Task.OpsiCrossMonth.help"
+      "name": "Cross Month Daily",
+      "help": "    ALAS will enter OpSi 10min before OpSi reset, wait until OpSi reset but not exit OpSi. Then do the daily, obscure, abyssal and meowfficer farming to get extra gold plates. When running dailies, settings in task \"OpSiDaily\" are used, the rest function are the same.\n    IMPORTANT: Please do not touch the game while ALAS is waiting for OpSi reset."
     },
     "Daemon": {
-      "name": "Task.Daemon.name",
-      "help": "Task.Daemon.help"
+      "name": "半自動クリック",
+      "help": ""
     },
     "OpsiDaemon": {
-      "name": "Task.OpsiDaemon.name",
-      "help": "Task.OpsiDaemon.help"
+      "name": "セイレーン作戦半自動",
+      "help": ""
     },
     "Benchmark": {
-      "name": "Task.Benchmark.name",
-      "help": "Task.Benchmark.help"
+      "name": "機能テスト",
+      "help": ""
     },
     "AzurLaneUncensored": {
-      "name": "Task.AzurLaneUncensored.name",
-      "help": "Task.AzurLaneUncensored.help"
+      "name": "中国サーバー規制解除",
+      "help": ""
     },
     "GameManager": {
-      "name": "Task.GameManager.name",
-      "help": "Task.GameManager.help"
+      "name": "Game Manager(WIP)",
+      "help": ""
     }
   },
   "Scheduler": {
@@ -266,7 +270,9 @@
     },
     "Enable": {
       "name": "Scheduler.Enable.name",
-      "help": "Scheduler.Enable.help"
+      "help": "Scheduler.Enable.help",
+      "True": "True",
+      "False": "False"
     },
     "NextRun": {
       "name": "Scheduler.NextRun.name",
@@ -314,10 +320,13 @@
       "com.bilibili.blhx.nearme.gamecenter": "CN com.bilibili.blhx.nearme.gamecenter",
       "com.bilibili.blhx.vivo": "CN com.bilibili.blhx.vivo",
       "com.bilibili.blhx.mz": "CN com.bilibili.blhx.mz",
+      "com.bilibili.blhx.dl": "CN com.bilibili.blhx.dl",
+      "com.bilibili.blhx.lenovo": "CN com.bilibili.blhx.lenovo",
       "com.bilibili.blhx.uc": "CN com.bilibili.blhx.uc",
       "com.bilibili.blhx.mzw": "CN com.bilibili.blhx.mzw",
       "com.yiwu.blhx.yx15": "CN com.yiwu.blhx.yx15",
       "com.bilibili.blhx.m4399": "CN com.bilibili.blhx.m4399",
+      "com.bilibili.blhx.bilibiliMove": "CN com.bilibili.blhx.bilibiliMove",
       "com.hkmanjuu.azurlane.gp.mc": "TW com.hkmanjuu.azurlane.gp.mc"
     },
     "ServerName": {
@@ -347,6 +356,7 @@
       "cn_android-20": "[国服] 水星行动",
       "cn_android-21": "[国服] 莱茵河卫兵",
       "cn_android-22": "[国服] 北极光计划",
+      "cn_android-23": "[国服] 长戟计划",
       "cn_ios-0": "[国服] 夏威夷",
       "cn_ios-1": "[国服] 珊瑚海",
       "cn_ios-2": "[国服] 中途岛",
@@ -362,11 +372,13 @@
       "cn_channel-1": "[国服] 大西洋宪章",
       "cn_channel-2": "[国服] 十字军行动",
       "cn_channel-3": "[国服] 龙骑兵行动",
+      "cn_channel-4": "[国服] 冥王星行动",
       "en-0": "[EN] Avrora",
       "en-1": "[EN] Lexington",
       "en-2": "[EN] Sandy",
       "en-3": "[EN] Washington",
       "en-4": "[EN] Amagi",
+      "en-5": "[EN] Little Enterprise",
       "jp-0": "[JP] ブレスト",
       "jp-1": "[JP] 横須賀",
       "jp-2": "[JP] 佐世保",
@@ -389,6 +401,7 @@
     "ScreenshotMethod": {
       "name": "Emulator.ScreenshotMethod.name",
       "help": "Emulator.ScreenshotMethod.help",
+      "auto": "auto",
       "ADB": "ADB",
       "ADB_nc": "ADB_nc",
       "uiautomator2": "uiautomator2",
@@ -404,7 +417,8 @@
       "ADB": "ADB",
       "uiautomator2": "uiautomator2",
       "minitouch": "minitouch",
-      "Hermit": "Hermit"
+      "Hermit": "Hermit",
+      "MaaTouch": "MaaTouch"
     },
     "ScreenshotDedithering": {
       "name": "Emulator.ScreenshotDedithering.name",
@@ -501,8 +515,7 @@
       "name": "DropRecord.API.name",
       "help": "DropRecord.API.help",
       "default": "default",
-      "cn_gz_reverse_proxy": "cn_gz_reverse_proxy",
-      "cn_sh_reverse_proxy": "cn_sh_reverse_proxy"
+      "cn_gz_reverse_proxy": "cn_gz_reverse_proxy"
     },
     "ResearchRecord": {
       "name": "DropRecord.ResearchRecord.name",
@@ -554,50 +567,72 @@
       "name": "Retirement._info.name",
       "help": "Retirement._info.help"
     },
-    "Enable": {
-      "name": "Retirement.Enable.name",
-      "help": "Retirement.Enable.help"
-    },
     "RetireMode": {
       "name": "Retirement.RetireMode.name",
       "help": "Retirement.RetireMode.help",
       "one_click_retire": "one_click_retire",
       "enhance": "enhance",
       "old_retire": "old_retire"
+    }
+  },
+  "OneClickRetire": {
+    "_info": {
+      "name": "OneClickRetire._info.name",
+      "help": "OneClickRetire._info.help"
+    },
+    "KeepLimitBreak": {
+      "name": "OneClickRetire.KeepLimitBreak.name",
+      "help": "OneClickRetire.KeepLimitBreak.help",
+      "keep_limit_break": "keep_limit_break",
+      "do_not_keep": "do_not_keep"
+    }
+  },
+  "Enhance": {
+    "_info": {
+      "name": "Enhance._info.name",
+      "help": "Enhance._info.help"
+    },
+    "ShipToEnhance": {
+      "name": "Enhance.ShipToEnhance.name",
+      "help": "Enhance.ShipToEnhance.help",
+      "all": "all",
+      "favourite": "favourite"
+    },
+    "Filter": {
+      "name": "Enhance.Filter.name",
+      "help": "Enhance.Filter.help"
+    },
+    "CheckPerCategory": {
+      "name": "Enhance.CheckPerCategory.name",
+      "help": "Enhance.CheckPerCategory.help"
+    }
+  },
+  "OldRetire": {
+    "_info": {
+      "name": "OldRetire._info.name",
+      "help": "OldRetire._info.help"
+    },
+    "N": {
+      "name": "OldRetire.N.name",
+      "help": "OldRetire.N.help"
+    },
+    "R": {
+      "name": "OldRetire.R.name",
+      "help": "OldRetire.R.help"
+    },
+    "SR": {
+      "name": "OldRetire.SR.name",
+      "help": "OldRetire.SR.help"
+    },
+    "SSR": {
+      "name": "OldRetire.SSR.name",
+      "help": "OldRetire.SSR.help"
     },
     "RetireAmount": {
-      "name": "Retirement.RetireAmount.name",
-      "help": "Retirement.RetireAmount.help",
+      "name": "OldRetire.RetireAmount.name",
+      "help": "OldRetire.RetireAmount.help",
       "retire_all": "retire_all",
       "retire_10": "retire_10"
-    },
-    "EnhanceFavourite": {
-      "name": "Retirement.EnhanceFavourite.name",
-      "help": "Retirement.EnhanceFavourite.help"
-    },
-    "EnhanceFilter": {
-      "name": "Retirement.EnhanceFilter.name",
-      "help": "Retirement.EnhanceFilter.help"
-    },
-    "EnhanceCheckPerCategory": {
-      "name": "Retirement.EnhanceCheckPerCategory.name",
-      "help": "Retirement.EnhanceCheckPerCategory.help"
-    },
-    "OldRetireN": {
-      "name": "Retirement.OldRetireN.name",
-      "help": "Retirement.OldRetireN.help"
-    },
-    "OldRetireR": {
-      "name": "Retirement.OldRetireR.name",
-      "help": "Retirement.OldRetireR.help"
-    },
-    "OldRetireSR": {
-      "name": "Retirement.OldRetireSR.name",
-      "help": "Retirement.OldRetireSR.help"
-    },
-    "OldRetireSSR": {
-      "name": "Retirement.OldRetireSSR.name",
-      "help": "Retirement.OldRetireSSR.help"
     }
   },
   "Campaign": {
@@ -613,85 +648,108 @@
       "name": "Campaign.Event.name",
       "help": "Campaign.Event.help",
       "campaign_main": "campaign_main",
-      "raid_20220127": "秘密事件調査",
-      "raid_20230118": "冬の案内人",
-      "event_20210610_tw": "復刻夜幕下的歸途",
-      "event_20210225_cn": "暁射す氷華の嵐（復刻）",
-      "event_20211229_cn": "遡望せし虹彩の塔",
-      "event_20221222_cn": "積重なる事象の幻界",
-      "event_20221124_cn": "錬金術士と謎の遺跡群島",
-      "event_20210325_cn": "開かれし紺碧の砂箱（復刻）",
-      "event_20201229_cn": "虚畳なりし限象（復刻）",
-      "event_20211111_cn": "燈火のシニエ",
-      "raid_20221027": "戦え！ロイヤルメイド隊3rd",
-      "event_20210121_cn": "悲歎せし焔海の詩（復刻）",
-      "event_20220915_cn": "赫の涙月 菫の暁風",
-      "event_20210916_cn": "駆けよ 碧海の吹き風",
-      "event_20200903_en": "輝ける峡湾の星（復刻）",
-      "event_20220818_cn": "結像点作戦",
-      "event_20220324_cn": "幻像の塔",
-      "event_20211028_cn": "神穹を衝く聖歌（復刻）",
-      "event_20220728_cn": "鋼鷲の冒険譚",
-      "event_20200917_cn": "刹那觀る胡蝶の夢（復刻）",
-      "event_20201029_cn": "激唱のユニバース",
-      "raid_20220630": "アイリスの天使",
-      "raid_20210708": "交錯する新たな波 (復刻)",
-      "event_20200820_cn": "黒鉄の楽章 誓いの海（復刻）",
-      "event_20201012_cn": "奔る彩帆の青（復刻）",
-      "event_20210527_cn": "照らす螺旋の鏡海",
-      "event_20220526_cn": "诚閃の剣 搖光の城",
-      "raid_20200624": "特別演習超空強襲波（復刻）",
-      "event_20220428_cn": "吟ずる瑠璃の楽章",
-      "event_20220414_cn": "極夜照らす幻光（復刻）",
-      "event_20220407_tw": "蒼紅的迴響(復刻)",
-      "event_20210422_cn": "讃える復興の迷路",
-      "event_20220310_tw": "復刻斯圖爾特的硝煙",
+      "coalition_20230323": "星霜海嵐",
+      "event_20200227_cn": "凍絶の北海",
+      "event_20200312_cn": "南洋に靡く硝煙（復刻）",
+      "event_20200326_cn": "闇靄払う銀翼",
+      "event_20200423_cn": "縹映る深緋の残響（復刻）",
+      "event_20200507_cn": "帰路は海色の陰りへと",
+      "event_20200521_cn": "神穹を衝く聖歌",
+      "event_20200521_en": "Iris of Light and Dark Rerun",
       "event_20200603_cn": "峡湾間の反撃（復刻）",
-      "event_20220224_cn": "鳴動せし星霜の淵",
-      "event_20220210_cn": "凍絶の北海（復刻）",
-      "event_20211125_cn": "弧光は交わる世界にて",
-      "event_20211028_tw": "復刻光與影的鳶尾之華",
-      "event_20210722_cn": "海に響くアイドルの歌",
-      "event_20210819_cn": "闇靄払う銀翼（復刻）",
-      "event_20200806_cn": "鉄血鮫とエニグマ（復刻）",
+      "event_20200603_en": "Prelude under the Moon Rerun",
+      "event_20200611_en": "Skybound Oratorio",
+      "event_20200716_en": "Ink Stained Steel Sakura Rerun",
       "event_20200723_cn": "極夜照らす幻光",
+      "event_20200806_cn": "鉄血鮫とエニグマ（復刻）",
+      "event_20200820_cn": "黒鉄の楽章 誓いの海（復刻）",
+      "event_20200903_en": "輝ける峡湾の星（復刻）",
+      "event_20200917_cn": "刹那觀る胡蝶の夢（復刻）",
+      "event_20201002_en": "Counterattack Within the Fjord",
+      "event_20201012_cn": "奔る彩帆の青（復刻）",
+      "event_20201029_cn": "激唱のユニバース",
+      "event_20201126_cn": "バケーションレーン",
+      "event_20201229_cn": "虚畳なりし限象（復刻）",
+      "event_20210121_cn": "悲歎せし焔海の詩（復刻）",
+      "event_20210225_cn": "暁射す氷華の嵐（復刻）",
+      "event_20210225_tw": "北境序曲",
+      "event_20210325_cn": "開かれし紺碧の砂箱（復刻）",
+      "event_20210415_tw": "復刻圍剿施佩伯爵",
+      "event_20210422_cn": "讃える復興の迷路（復刻）",
+      "event_20210429_tw": "復刻墨染的鋼鐵之花",
+      "event_20210527_cn": "照らす螺旋の鏡海（復刻）",
+      "event_20210527_tw": "微層混合",
+      "event_20210610_tw": "復刻夜幕下的歸途",
       "event_20210624_cn": "翳りし満ちる影の華(復刻)",
       "event_20210624_tw": "穹頂下的聖詠曲",
-      "event_20210527_tw": "微層混合",
-      "event_20210429_tw": "復刻墨染的鋼鐵之花",
-      "event_20210415_tw": "復刻圍剿施佩伯爵",
-      "event_20210225_tw": "北境序曲",
-      "event_20201126_cn": "バケーションレーン",
-      "event_20200312_cn": "南洋に靡く硝煙（復刻）",
-      "event_20201002_en": "Counterattack Within the Fjord",
-      "event_20200716_en": "Ink Stained Steel Sakura Rerun",
-      "event_20200611_en": "Skybound Oratorio",
-      "event_20200603_en": "Prelude under the Moon Rerun",
-      "event_20200521_en": "Iris of Light and Dark Rerun",
-      "event_20200521_cn": "神穹を衝く聖歌",
-      "event_20200507_cn": "帰路は海色の陰りへと",
-      "event_20200423_cn": "縹映る深緋の残響（復刻）",
-      "event_20200326_cn": "闇靄払う銀翼",
-      "event_20200227_cn": "凍絶の北海",
-      "war_archives_20210819_cn": "檔案 闇靄払う銀翼",
-      "war_archives_20200903_cn": "檔案 輝ける峡湾の星",
-      "war_archives_20201029_cn": "檔案 激唱のユニバース",
-      "war_archives_20200806_cn": "檔案 鉄血鮫とエニグマ",
-      "war_archives_20210624_cn": "檔案 翳りし満ちる影の華",
-      "war_archives_20210325_cn": "檔案 開かれし紺碧の砂箱",
-      "war_archives_20190911_cn": "檔案 悲歎せし焔海の詩",
-      "war_archives_20211014_cn": "檔案 激奏のポラリス",
-      "war_archives_20200820_cn": "檔案 黒鉄の楽章 誓いの海",
-      "war_archives_20181227_cn": "檔案 縹映る深緋の残響",
-      "war_archives_20180726_cn": "檔案 光と影のアイリス",
+      "event_20210722_cn": "海に響くアイドルの歌",
+      "event_20210819_cn": "闇靄払う銀翼（復刻）",
+      "event_20210916_cn": "駆けよ 碧海の吹き風（復刻）",
+      "event_20211028_cn": "神穹を衝く聖歌（復刻）",
+      "event_20211028_tw": "復刻光與影的鳶尾之華",
+      "event_20211111_cn": "復刻-燈火のシニエ",
+      "event_20211125_cn": "弧光は交わる世界にて（復刻）",
+      "event_20211229_cn": "遡望せし虹彩の塔（復刻）",
+      "event_20220210_cn": "凍絶の北海（復刻）",
+      "event_20220224_cn": "鳴動せし星霜の淵",
+      "event_20220310_tw": "復刻斯圖爾特的硝煙",
+      "event_20220324_cn": "幻像の塔（復刻）",
+      "event_20220407_tw": "蒼紅的迴響(復刻)",
+      "event_20220414_cn": "極夜照らす幻光（復刻）",
+      "event_20220428_cn": "吟ずる瑠璃の楽章",
+      "event_20220526_cn": "诚閃の剣 搖光の城",
+      "event_20220728_cn": "鋼鷲の冒険譚",
+      "event_20220818_cn": "結像点作戦",
+      "event_20220915_cn": "赫の涙月 菫の暁風",
+      "event_20221124_cn": "錬金術士と謎の遺跡群島",
+      "event_20221222_cn": "積重なる事象の幻界",
+      "event_20230223_cn": "黙示の遺構",
+      "event_20230525_cn": "覆天せし万象の塵",
+      "event_20230803_cn": "燃ゆる聖都の回想曲",
+      "event_20230817_cn": "愚者の天秤",
+      "event_20230914_cn": "須臾望月抄",
+      "event_20231026_cn": "テンペスタと若返りの泉",
+      "event_20231123_cn": "蒼閃忍法帖",
+      "event_20231221_cn": "光追う星の海",
+      "event_20240229_cn": "銀界遊廻",
+      "raid_20200624": "特別演習超空強襲波（復刻）",
+      "raid_20210708": "交錯する新たな波 (復刻)",
+      "raid_20220127": "秘密事件調査",
+      "raid_20220630": "アイリスの天使",
+      "raid_20221027": "戦え！ロイヤルメイド隊3rd",
+      "raid_20230118": "冬の案内人",
+      "raid_20230629": "緑地伽話",
+      "raid_20240130": "新春宴会狂騒曲",
       "war_archives_20180607_cn": "檔案 墨染まりし鋼の桜",
-      "war_archives_20190221_en": "檔案 凛冽なりし冬の王冠",
-      "war_archives_20191010_en": "檔案 アドミラル・グラーフ・シュペー追撃戦",
+      "war_archives_20180726_cn": "檔案 光と影のアイリス",
+      "war_archives_20181020_en": "檔案 努力希望と計画",
       "war_archives_20181026_en": "檔案 闇に堕ちた青き翼",
-      "war_archives_20190620_en": "檔案 栄光なる最終戦",
+      "war_archives_20181227_cn": "檔案 縹映る深緋の残響",
+      "war_archives_20190221_en": "檔案 凛冽なりし冬の王冠",
+      "war_archives_20190314_en": "檔案 月夜の開幕曲",
       "war_archives_20190321_en": "檔案 紅染の来訪者",
+      "war_archives_20190620_en": "檔案 栄光なる最終戦",
+      "war_archives_20190911_cn": "檔案 悲歎せし焔海の詩",
+      "war_archives_20191010_en": "檔案 アドミラル・グラーフ・シュペー追撃戦",
       "war_archives_20191031_en": "檔案 鏡写されし異色",
-      "war_archives_20181020_en": "檔案 努力希望と計画"
+      "war_archives_20200312_cn": "檔案 南洋に靡く硝煙",
+      "war_archives_20200507_cn": "檔案 帰路は海色の陰りへと",
+      "war_archives_20200603_cn": "檔案 峡湾間の反撃",
+      "war_archives_20200806_cn": "檔案 鉄血鮫とエニグマ",
+      "war_archives_20200820_cn": "檔案 黒鉄の楽章 誓いの海",
+      "war_archives_20200903_cn": "檔案 輝ける峡湾の星",
+      "war_archives_20200917_cn": "檔案 刹那觀る胡蝶の夢",
+      "war_archives_20201029_cn": "檔案 激唱のユニバース",
+      "war_archives_20201229_cn": "檔案 虚畳なりし限象",
+      "war_archives_20210225_cn": "檔案 暁射す氷華の嵐",
+      "war_archives_20210325_cn": "檔案 開かれし紺碧の砂箱",
+      "war_archives_20210527_cn": "檔案 照らす螺旋の鏡海",
+      "war_archives_20210624_cn": "檔案 翳りし満ちる影の華",
+      "war_archives_20210819_cn": "檔案 闇靄払う銀翼",
+      "war_archives_20211014_cn": "檔案 激奏のポラリス",
+      "war_archives_20211028_cn": "檔案 神穹を衝く聖歌",
+      "war_archives_20220210_cn": "檔案 凍絶の北海",
+      "war_archives_20220414_cn": "檔案 極夜照らす幻光"
     },
     "Mode": {
       "name": "Campaign.Mode.name",
@@ -877,13 +935,12 @@
       "name": "Emotion._info.name",
       "help": "Emotion._info.help"
     },
-    "CalculateEmotion": {
-      "name": "Emotion.CalculateEmotion.name",
-      "help": "Emotion.CalculateEmotion.help"
-    },
-    "IgnoreLowEmotionWarn": {
-      "name": "Emotion.IgnoreLowEmotionWarn.name",
-      "help": "Emotion.IgnoreLowEmotionWarn.help"
+    "Mode": {
+      "name": "Emotion.Mode.name",
+      "help": "Emotion.Mode.help",
+      "calculate": "calculate",
+      "ignore": "ignore",
+      "calculate_ignore": "calculate_ignore"
     },
     "Fleet1Value": {
       "name": "Emotion.Fleet1Value.name",
@@ -1058,25 +1115,18 @@
       "name": "GemsFarming._info.name",
       "help": "GemsFarming._info.help"
     },
-    "FlagshipChange": {
-      "name": "GemsFarming.FlagshipChange.name",
-      "help": "GemsFarming.FlagshipChange.help"
+    "ChangeFlagship": {
+      "name": "GemsFarming.ChangeFlagship.name",
+      "help": "GemsFarming.ChangeFlagship.help",
+      "ship": "ship",
+      "ship_equip": "ship_equip"
     },
-    "FlagshipEquipChange": {
-      "name": "GemsFarming.FlagshipEquipChange.name",
-      "help": "GemsFarming.FlagshipEquipChange.help"
-    },
-    "VanguardChange": {
-      "name": "GemsFarming.VanguardChange.name",
-      "help": "GemsFarming.VanguardChange.help"
-    },
-    "VanguardEquipChange": {
-      "name": "GemsFarming.VanguardEquipChange.name",
-      "help": "GemsFarming.VanguardEquipChange.help"
-    },
-    "LowEmotionRetreat": {
-      "name": "GemsFarming.LowEmotionRetreat.name",
-      "help": "GemsFarming.LowEmotionRetreat.help"
+    "ChangeVanguard": {
+      "name": "GemsFarming.ChangeVanguard.name",
+      "help": "GemsFarming.ChangeVanguard.help",
+      "disabled": "disabled",
+      "ship": "ship",
+      "ship_equip": "ship_equip"
     },
     "CommonCV": {
       "name": "GemsFarming.CommonCV.name",
@@ -1151,7 +1201,8 @@
       "help": "Raid.Mode.help",
       "easy": "easy",
       "normal": "normal",
-      "hard": "hard"
+      "hard": "hard",
+      "ex": "ex"
     },
     "UseTicket": {
       "name": "Raid.UseTicket.name",
@@ -1178,14 +1229,22 @@
       "help": "MaritimeEscort.Enable.help"
     }
   },
+  "Coalition": {
+    "_info": {
+      "name": "Coalition._info.name",
+      "help": "Coalition._info.help"
+    },
+    "Fleet": {
+      "name": "Coalition.Fleet.name",
+      "help": "Coalition.Fleet.help",
+      "single": "single",
+      "multi": "multi"
+    }
+  },
   "Commission": {
     "_info": {
       "name": "Commission._info.name",
       "help": "Commission._info.help"
-    },
-    "DoMajorCommission": {
-      "name": "Commission.DoMajorCommission.name",
-      "help": "Commission.DoMajorCommission.help"
     },
     "PresetFilter": {
       "name": "Commission.PresetFilter.name",
@@ -1200,6 +1259,10 @@
     "CustomFilter": {
       "name": "Commission.CustomFilter.name",
       "help": "Commission.CustomFilter.help"
+    },
+    "DoMajorCommission": {
+      "name": "Commission.DoMajorCommission.name",
+      "help": "Commission.DoMajorCommission.help"
     }
   },
   "Tactical": {
@@ -1298,6 +1361,9 @@
       "name": "Research.PresetFilter.name",
       "help": "Research.PresetFilter.help",
       "custom": "custom",
+      "series_6_blueprint_203": "series_6_blueprint_203",
+      "series_6_blueprint_only": "series_6_blueprint_only",
+      "series_6_203_only": "series_6_203_only",
       "series_5_blueprint_152": "series_5_blueprint_152",
       "series_5_blueprint_only": "series_5_blueprint_only",
       "series_5_152_only": "series_5_152_only",
@@ -1333,6 +1399,26 @@
     "FeedFilter": {
       "name": "Dorm.FeedFilter.name",
       "help": "Dorm.FeedFilter.help"
+    }
+  },
+  "BuyFurniture": {
+    "_info": {
+      "name": "BuyFurniture._info.name",
+      "help": "BuyFurniture._info.help"
+    },
+    "Enable": {
+      "name": "BuyFurniture.Enable.name",
+      "help": "BuyFurniture.Enable.help"
+    },
+    "BuyOption": {
+      "name": "BuyFurniture.BuyOption.name",
+      "help": "BuyFurniture.BuyOption.help",
+      "set": "set",
+      "all": "all"
+    },
+    "LastRun": {
+      "name": "BuyFurniture.LastRun.name",
+      "help": "BuyFurniture.LastRun.help"
     }
   },
   "Meowfficer": {
@@ -1467,6 +1553,10 @@
     "BuySkinBox": {
       "name": "GeneralShop.BuySkinBox.name",
       "help": "GeneralShop.BuySkinBox.help"
+    },
+    "ConsumeCoins": {
+      "name": "GeneralShop.ConsumeCoins.name",
+      "help": "GeneralShop.ConsumeCoins.help"
     },
     "Filter": {
       "name": "GeneralShop.Filter.name",
@@ -1671,6 +1761,37 @@
       "help": "CoreShop.Filter.help"
     }
   },
+  "ShipyardDr": {
+    "_info": {
+      "name": "ShipyardDr._info.name",
+      "help": "ShipyardDr._info.help"
+    },
+    "ResearchSeries": {
+      "name": "ShipyardDr.ResearchSeries.name",
+      "help": "ShipyardDr.ResearchSeries.help",
+      "2": "2",
+      "3": "3"
+    },
+    "ShipIndex": {
+      "name": "ShipyardDr.ShipIndex.name",
+      "help": "ShipyardDr.ShipIndex.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    },
+    "BuyAmount": {
+      "name": "ShipyardDr.BuyAmount.name",
+      "help": "ShipyardDr.BuyAmount.help"
+    },
+    "LastRun": {
+      "name": "ShipyardDr.LastRun.name",
+      "help": "ShipyardDr.LastRun.help"
+    }
+  },
   "Shipyard": {
     "_info": {
       "name": "Shipyard._info.name",
@@ -1678,15 +1799,30 @@
     },
     "ResearchSeries": {
       "name": "Shipyard.ResearchSeries.name",
-      "help": "Shipyard.ResearchSeries.help"
+      "help": "Shipyard.ResearchSeries.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
     "ShipIndex": {
       "name": "Shipyard.ShipIndex.name",
-      "help": "Shipyard.ShipIndex.help"
+      "help": "Shipyard.ShipIndex.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "BuyAmount": {
       "name": "Shipyard.BuyAmount.name",
       "help": "Shipyard.BuyAmount.help"
+    },
+    "LastRun": {
+      "name": "Shipyard.LastRun.name",
+      "help": "Shipyard.LastRun.help"
     }
   },
   "Gacha": {
@@ -1776,6 +1912,27 @@
     "Collect": {
       "name": "SupplyPack.Collect.name",
       "help": "SupplyPack.Collect.help"
+    },
+    "DayOfWeek": {
+      "name": "SupplyPack.DayOfWeek.name",
+      "help": "SupplyPack.DayOfWeek.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    }
+  },
+  "Minigame": {
+    "_info": {
+      "name": "Minigame._info.name",
+      "help": "Minigame._info.help"
+    },
+    "Collect": {
+      "name": "Minigame.Collect.name",
+      "help": "Minigame.Collect.help"
     }
   },
   "Daily": {
@@ -1883,6 +2040,23 @@
       "4": "4",
       "5": "5",
       "6": "6"
+    },
+    "EmergencyModuleDevelopment": {
+      "name": "Daily.EmergencyModuleDevelopment.name",
+      "help": "Daily.EmergencyModuleDevelopment.help",
+      "skip": "skip",
+      "first": "first",
+      "second": "second"
+    },
+    "EmergencyModuleDevelopmentFleet": {
+      "name": "Daily.EmergencyModuleDevelopmentFleet.name",
+      "help": "Daily.EmergencyModuleDevelopmentFleet.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     }
   },
   "Hard": {
@@ -1918,9 +2092,17 @@
       "name": "Exercise.OpponentTrial.name",
       "help": "Exercise.OpponentTrial.help"
     },
-    "ExercisePreserve": {
-      "name": "Exercise.ExercisePreserve.name",
-      "help": "Exercise.ExercisePreserve.help"
+    "ExerciseStrategy": {
+      "name": "Exercise.ExerciseStrategy.name",
+      "help": "Exercise.ExerciseStrategy.help",
+      "aggressive": "aggressive",
+      "fri18": "fri18",
+      "sat0": "sat0",
+      "sat12": "sat12",
+      "sat18": "sat18",
+      "sun0": "sun0",
+      "sun12": "sun12",
+      "sun18": "sun18"
     },
     "LowHpThreshold": {
       "name": "Exercise.LowHpThreshold.name",
@@ -2008,13 +2190,19 @@
       "name": "OpsiAshBeacon._info.name",
       "help": "OpsiAshBeacon._info.help"
     },
-    "AshAttack": {
-      "name": "OpsiAshBeacon.AshAttack.name",
-      "help": "OpsiAshBeacon.AshAttack.help"
+    "AttackMode": {
+      "name": "OpsiAshBeacon.AttackMode.name",
+      "help": "OpsiAshBeacon.AttackMode.help",
+      "current": "current",
+      "current_dossier": "current_dossier"
     },
     "OneHitMode": {
       "name": "OpsiAshBeacon.OneHitMode.name",
       "help": "OpsiAshBeacon.OneHitMode.help"
+    },
+    "DossierAutoAttackMode": {
+      "name": "OpsiAshBeacon.DossierAutoAttackMode.name",
+      "help": "OpsiAshBeacon.DossierAutoAttackMode.help"
     },
     "RequestAssist": {
       "name": "OpsiAshBeacon.RequestAssist.name",
@@ -2023,16 +2211,6 @@
     "EnsureFullyCollected": {
       "name": "OpsiAshBeacon.EnsureFullyCollected.name",
       "help": "OpsiAshBeacon.EnsureFullyCollected.help"
-    }
-  },
-  "OpsiDossierBeacon": {
-    "_info": {
-      "name": "OpsiDossierBeacon._info.name",
-      "help": "OpsiDossierBeacon._info.help"
-    },
-    "Enable": {
-      "name": "OpsiDossierBeacon.Enable.name",
-      "help": "OpsiDossierBeacon.Enable.help"
     }
   },
   "OpsiFleetFilter": {
@@ -2253,12 +2431,12 @@
   },
   "AzurLaneUncensored": {
     "_info": {
-      "name": "AzurLaneUncensored._info.name",
-      "help": "AzurLaneUncensored._info.help"
+      "name": "規制解除（中国サーバー以外実行しないでください）",
+      "help": "中国サーバーしかつかえない、実行しないでください。\n仅国服使用。这个工具将执行：\n- 下载反和谐文件\n- 将文件推送至模拟器内\n- 重启游戏客户端"
     },
     "Repository": {
-      "name": "AzurLaneUncensored.Repository.name",
-      "help": "AzurLaneUncensored.Repository.help"
+      "name": "反和谐仓库",
+      "help": "一般不需要修改\n仓库 https://github.com/LmeSzinc/AzurLaneUncensored\n国内镜像（默认） https://gitee.com/LmeSzinc/AzurLaneUncensored"
     }
   },
   "GameManager": {
@@ -2283,93 +2461,118 @@
   },
   "Gui": {
     "Aside": {
-      "Install": "Gui.Aside.Install",
-      "Develop": "Gui.Aside.Develop",
-      "Performance": "Gui.Aside.Performance",
-      "Setting": "Gui.Aside.Setting",
-      "AddAlas": "Gui.Aside.AddAlas"
+      "Install": "インストール",
+      "Home": "Gui.Aside.Home",
+      "Develop": "開発",
+      "Performance": "機能",
+      "Setting": "設定",
+      "AddAlas": "追加"
     },
     "Button": {
-      "Start": "Gui.Button.Start",
-      "Stop": "Gui.Button.Stop",
-      "ScrollON": "Gui.Button.ScrollON",
-      "ScrollOFF": "Gui.Button.ScrollOFF",
-      "ClearLog": "Gui.Button.ClearLog",
-      "Setting": "Gui.Button.Setting",
-      "CheckUpdate": "Gui.Button.CheckUpdate",
-      "ClickToUpdate": "Gui.Button.ClickToUpdate",
-      "RetryUpdate": "Gui.Button.RetryUpdate",
-      "CancelUpdate": "Gui.Button.CancelUpdate"
+      "Start": "実行",
+      "Stop": "中止",
+      "ScrollON": "自動スクロール ON",
+      "ScrollOFF": "自動スクロール OFF",
+      "ClearLog": "ログクリーニング",
+      "Setting": "設定",
+      "CheckUpdate": "アップデータチェック",
+      "ClickToUpdate": "アップデータ実行",
+      "RetryUpdate": "アップデータ再試行",
+      "CancelUpdate": "アップデータ中止"
     },
     "Toast": {
-      "DisableTranslateMode": "Gui.Toast.DisableTranslateMode",
-      "ConfigSaved": "Gui.Toast.ConfigSaved",
-      "AlasIsRunning": "Gui.Toast.AlasIsRunning",
-      "ClickToUpdate": "Gui.Toast.ClickToUpdate"
+      "DisableTranslateMode": "クリックして翻訳モードを中止します",
+      "ConfigSaved": "コンフィグ設定は保存されました",
+      "AlasIsRunning": "スケジューラーはもう実行しています",
+      "ClickToUpdate": "新しいアップデータがあります。クリックしてアップデータ"
     },
     "Status": {
-      "Running": "Gui.Status.Running",
-      "Inactive": "Gui.Status.Inactive",
-      "Warning": "Gui.Status.Warning",
-      "Updating": "Gui.Status.Updating"
+      "Running": "実行中",
+      "Inactive": "実行中止",
+      "Warning": "エラー発生",
+      "Updating": "アップデータを待っています"
     },
     "MenuAlas": {
-      "Overview": "Gui.MenuAlas.Overview",
-      "Log": "Gui.MenuAlas.Log"
+      "Overview": "概要",
+      "Log": "実行ログ"
     },
     "MenuDevelop": {
-      "HomePage": "Gui.MenuDevelop.HomePage",
-      "Translate": "Gui.MenuDevelop.Translate",
-      "Update": "Gui.MenuDevelop.Update",
-      "Remote": "Gui.MenuDevelop.Remote",
-      "Utils": "Gui.MenuDevelop.Utils"
+      "HomePage": "ホームページ",
+      "Translate": "翻訳",
+      "Update": "アップデータ",
+      "Remote": "遠隔操作",
+      "Utils": "ツール"
     },
     "Overview": {
-      "Scheduler": "Gui.Overview.Scheduler",
-      "Log": "Gui.Overview.Log",
-      "Running": "Gui.Overview.Running",
-      "Pending": "Gui.Overview.Pending",
-      "Waiting": "Gui.Overview.Waiting",
-      "NoTask": "Gui.Overview.NoTask"
+      "Scheduler": "スケジューラー",
+      "Log": "ログ",
+      "Running": "実行中",
+      "Pending": "隊列中",
+      "Waiting": "Waiting",
+      "NoTask": "No Task"
     },
     "AddAlas": {
-      "PopupTitle": "Gui.AddAlas.PopupTitle",
-      "NewName": "Gui.AddAlas.NewName",
-      "CopyFrom": "Gui.AddAlas.CopyFrom",
-      "Confirm": "Gui.AddAlas.Confirm",
-      "FileExist": "Gui.AddAlas.FileExist",
-      "InvalidChar": "設定ファイル名には次の文字は使えません：.\\/:*?\"<>|"
+      "PopupTitle": "新しいコンフィグを追加",
+      "NewName": "コンフィグ名",
+      "CopyFrom": "既存コンフィグからコピー",
+      "Confirm": "追加",
+      "FileExist": "既存コンフィグと同じネーミングとなっていますから別名前を入力してください",
+      "InvalidChar": "コンフィグ名には下記の文字を含めることはできません：.\\/:*?\"<>|",
+      "InvalidPrefixTemplate": "設定ファイル名は temlpate で始めることはできません",
+      "Manage": "管理"
+    },
+    "AppManage": {
+      "PageTitle": "コンフィグ管理",
+      "TitleNew": "コンフィグを追加",
+      "NewName": "コンフィグ名",
+      "CopyFrom": "既存コンフィグからコピー",
+      "NameExist": "コンフィグ名が既に存在しています",
+      "InvalidChar": "コンフィグ名には下記の文字を含めることはできません：.\\/:*?\"<>|",
+      "InvalidPrefixTemplate": "設定ファイル名は temlpate で始めることはできません",
+      "Back": "戻る",
+      "New": "追加",
+      "Import": "インポート",
+      "Export": "エクスポート",
+      "Delete": "削除",
+      "OverrideWarning": "This will override the current config!",
+      "ImportSuccess": "インポート成功",
+      "NewSuccess": "追加成功",
+      "Name": "コンフィグ名",
+      "Mod": "モジュール",
+      "Actions": "操作"
     },
     "Update": {
-      "UpToDate": "Gui.Update.UpToDate",
-      "HaveUpdate": "Gui.Update.HaveUpdate",
-      "UpdateStart": "Gui.Update.UpdateStart",
-      "UpdateWait": "Gui.Update.UpdateWait",
-      "UpdateRun": "Gui.Update.UpdateRun",
-      "UpdateSuccess": "Gui.Update.UpdateSuccess",
-      "UpdateFailed": "Gui.Update.UpdateFailed",
-      "UpdateChecking": "Gui.Update.UpdateChecking",
-      "UpdateCancel": "Gui.Update.UpdateCancel",
-      "UpdateFinish": "Gui.Update.UpdateFinish",
-      "Local": "Gui.Update.Local",
-      "Upstream": "Gui.Update.Upstream",
-      "Author": "Gui.Update.Author",
-      "Time": "Gui.Update.Time",
-      "Message": "Gui.Update.Message",
-      "DisabledWarn": "Gui.Update.DisabledWarn",
-      "DetailedHistory": "Gui.Update.DetailedHistory"
+      "UpToDate": "今Alasは最新バージョンです",
+      "HaveUpdate": "新しいアップデータがあります",
+      "UpdateStart": "アップデータ開始",
+      "UpdateWait": "全てのプロセスの完了を待っています",
+      "UpdateRun": "アップデータ中",
+      "UpdateSuccess": "アップデータ完了、再起動しています",
+      "UpdateFailed": "アップデータ失敗、./log/*_gui.txtでログをチェックしてください",
+      "UpdateChecking": "アップデータチェック中",
+      "UpdateCancel": "アップデータ中止、再起動しています",
+      "UpdateFinish": "アップデータ完了、再起動してください",
+      "Local": "ロケール",
+      "Upstream": "オンライン",
+      "Author": "提出者",
+      "Time": "提出時間",
+      "Message": "提出内容",
+      "DisabledWarn": "アップデータモジュールは稼働されませんのでAlasを再起動してください",
+      "DetailedHistory": "詳しい提出履歴"
     },
     "Remote": {
-      "Running": "Gui.Remote.Running",
-      "NotRunning": "Gui.Remote.NotRunning",
-      "NotEnable": "Gui.Remote.NotEnable",
-      "EntryPoint": "Gui.Remote.EntryPoint",
-      "ConfigureHint": "Gui.Remote.ConfigureHint",
-      "SSHNotInstall": "Gui.Remote.SSHNotInstall"
+      "Running": "実行中",
+      "NotRunning": "サーバーとの接続が中断したため、実行していない",
+      "NotEnable": "未启用，在 deploy.yaml 中设置 webui 密码并启用远程控制",
+      "EntryPoint": "远程访问 url 地址:",
+      "ConfigureHint": "配置教程：",
+      "SSHNotInstall": "システムでsshツールが探さない、sshツールをインストールしてください"
     },
     "Text": {
-      "InvalidFeedBack": "Gui.Text.InvalidFeedBack",
-      "Clear": "Gui.Text.Clear"
+      "InvalidFeedBack": "フォーマットエラー。 例：{0}",
+      "Clear": "消除",
+      "EnterPassword": "パスワードを入力してください",
+      "ChooseFile": "ファイルを選択してください"
     }
   }
 }

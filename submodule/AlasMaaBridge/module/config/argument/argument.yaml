@@ -59,8 +59,10 @@ MaaFight:
     value: last
     option: [last, 1-7, LS-6, CA-5, SK-5, AP-5, CE-6, PR-A-1, PR-A-2, PR-B-1, PR-B-2, PR-C-1, PR-C-2, PR-D-1, PR-D-2, custom]
   CustomStage: null
+  MedicineTactics:
+    value: no_use
+    option: [no_use, expiring, run_out]
   Medicine: null
-  RunOutOfMedicine: false
   Stone: null
   Times: null
   Drops:
@@ -69,6 +71,7 @@ MaaFight:
   DrGrandet: false
 
 MaaFightWeekly:
+  Enable: true
   Monday:
     value: default
     option: [default, LS-6, SK-5, AP-5, PR-A-1, PR-A-2, PR-B-1, PR-B-2]
@@ -108,31 +111,37 @@ MaaInfrast:
   Drones:
     value: Money
     option: [_NotUse, Money, SyntheticJade, CombatRecord, PureGold, OriginStone, Chip]
-  Threshold: 0.3
+  WorkThreshold: 12
+  ShiftThreshold: 4
   Notstationed: true
   Trust: true
   Replenish: false
 MaaCustomInfrast:
   Enable: false
+  BuiltinConfig:
+    value: custom
+    option: [custom, 153-3, 243-3, 243-4, 252-3, 333-3]
   Filename:
     value: null
     type: textarea
+  CustomPeriod: 16, 4, 4
+  PlanIndex: 0
 
 MaaMall:
   CreditFight: false
   Shopping: true
   ForceShoppingIfCreditFull: false
   BuyFirst:
-    value: 招聘许可 > 龙门币
+    value: 招聘许可
     type: textarea
   BlackList:
-    value: 碳 > 家具
+    value: 碳 > 家具 > 加急许可
     type: textarea
 
 MaaRoguelike:
   Theme:
-    value: Phantom
-    option: [Phantom, Mizuki]
+    value: Sami
+    option: [Phantom, Mizuki, Sami]
   Mode:
     value: 0
     option: [0, 1]
@@ -146,6 +155,9 @@ MaaRoguelike:
     value: 取长补短
     option: [先手必胜, 稳扎稳打, 取长补短, 随心所欲]
   CoreChar: null
+  Support:
+    value: no_use
+    option: [ no_use, friend_support, nonfriend_support ]
 
 # ==================== Tool ====================
 

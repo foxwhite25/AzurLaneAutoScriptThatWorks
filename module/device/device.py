@@ -1,5 +1,5 @@
+import collections
 import sys
-from collections import deque
 from datetime import datetime
 
 from module.base.timer import Timer
@@ -19,10 +19,50 @@ else:
         pass
 
 
+def show_function_call():
+    """
+    INFO     21:07:31.554 │ Function calls:
+                       <string>   L1 <module>
+                   spawn.py L116 spawn_main()
+                   spawn.py L129 _main()
+                 process.py L314 _bootstrap()
+                 process.py L108 run()
+         process_manager.py L149 run_process()
+                    alas.py L285 loop()
+                    alas.py  L69 run()
+                     src.py  L55 rogue()
+                   rogue.py  L36 run()
+                   rogue.py  L18 rogue_once()
+                   entry.py L335 rogue_world_enter()
+                    path.py L193 rogue_path_select()
+    """
+    import os
+    import traceback
+    stack = traceback.extract_stack()
+    func_list = []
+    for row in stack:
+        filename, line_number, function_name, _ = row
+        filename = os.path.basename(filename)
+        # /tasks/character/switch.py:64 character_update()
+        func_list.append([filename, str(line_number), function_name])
+    max_filename = max([len(row[0]) for row in func_list])
+    max_linenum = max([len(row[1]) for row in func_list]) + 1
+
+    def format_(file, line, func):
+        file = file.rjust(max_filename, " ")
+        line = f'L{line}'.rjust(max_linenum, " ")
+        if not func.startswith('<'):
+            func = f'{func}()'
+        return f'{file} {line} {func}'
+
+    func_list = [f'\n{format_(*row)}' for row in func_list]
+    logger.info('Function calls:' + ''.join(func_list))
+
+
 class Device(Screenshot, Control, AppControl, EmulatorManager):
     _screen_size_checked = False
     detect_record = set()
-    click_record = deque(maxlen=15)
+    click_record = collections.deque(maxlen=15)
     stuck_timer = Timer(60, count=60).start()
     stuck_timer_long = Timer(180, count=180).start()
     stuck_long_wait_list = ['BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK']
@@ -30,6 +70,29 @@ class Device(Screenshot, Control, AppControl, EmulatorManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.screenshot_interval_set()
+
+        # Temp fix for MuMu 12 before DroidCast updated
+        if self.is_mumu_family:
+            logger.info('Patching screenshot method for mumu')
+            self.config.override(Emulator_ScreenshotMethod='ADB_nc')
+        # Auto-select the fastest screenshot method
+        if not self.config.is_template_config and self.config.Emulator_ScreenshotMethod == 'auto':
+            self.run_simple_screenshot_benchmark()
+
+    def run_simple_screenshot_benchmark(self):
+        """
+        Perform a screenshot method benchmark, test 3 times on each method.
+        The fastest one will be set into config.
+        """
+        logger.info('run_simple_screenshot_benchmark')
+        # Check resolution first
+        self.resolution_check_uiautomator2()
+        # Perform benchmark
+        from module.daemon.benchmark import Benchmark
+        bench = Benchmark(config=self.config, device=self)
+        method = bench.run_simple_screenshot_benchmark()
+        # Set
+        self.config.Emulator_ScreenshotMethod = method
 
     def handle_night_commission(self, daily_trigger='21:00', threshold=30):
         """
@@ -59,7 +122,17 @@ class Device(Screenshot, Control, AppControl, EmulatorManager):
             np.ndarray:
         """
         self.stuck_record_check()
-        super().screenshot()
+
+        try:
+            super().screenshot()
+        except RequestHumanTakeover:
+            if not self.ascreencap_available:
+                logger.error('aScreenCap unavailable on current device, fallback to auto')
+                self.run_simple_screenshot_benchmark()
+                super().screenshot()
+            else:
+                raise
+
         if self.handle_night_commission():
             super().screenshot()
 
@@ -94,6 +167,7 @@ class Device(Screenshot, Control, AppControl, EmulatorManager):
                 if button in self.detect_record:
                     return False
 
+        show_function_call()
         logger.warning('Wait too long')
         logger.warning(f'Waiting for {self.detect_record}')
         self.stuck_record_clear()
@@ -114,21 +188,41 @@ class Device(Screenshot, Control, AppControl, EmulatorManager):
     def click_record_clear(self):
         self.click_record.clear()
 
+    def click_record_remove(self, button):
+        """
+        Remove a button from `click_record`
+
+        Args:
+            button (Button):
+
+        Returns:
+            int: Number of button removed
+        """
+        removed = 0
+        for _ in range(self.click_record.maxlen):
+            try:
+                self.click_record.remove(str(button))
+                removed += 1
+            except ValueError:
+                # Value not in queue
+                break
+
+        return removed
+
     def click_record_check(self):
         """
         Raises:
             GameTooManyClickError:
         """
-        count = {}
-        for key in self.click_record:
-            count[key] = count.get(key, 0) + 1
-        count = sorted(count.items(), key=lambda item: item[1])
+        count = collections.Counter(self.click_record).most_common(2)
         if count[0][1] >= 12:
+            show_function_call()
             logger.warning(f'Too many click for a button: {count[0][0]}')
             logger.warning(f'History click: {[str(prev) for prev in self.click_record]}')
             self.click_record_clear()
             raise GameTooManyClickError(f'Too many click for a button: {count[0][0]}')
         if len(count) >= 2 and count[0][1] >= 6 and count[1][1] >= 6:
+            show_function_call()
             logger.warning(f'Too many click between 2 buttons: {count[0][0]}, {count[1][0]}')
             logger.warning(f'History click: {[str(prev) for prev in self.click_record]}')
             self.click_record_clear()

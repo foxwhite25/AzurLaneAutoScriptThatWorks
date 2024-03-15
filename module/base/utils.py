@@ -1,6 +1,10 @@
+import re
+
 import cv2
 import numpy as np
 from PIL import Image
+
+REGEX_NODE = re.compile(r'(-?[A-Za-z]+)(-?\d+)')
 
 
 def random_normal_distribution_int(a, b, n=3):
@@ -50,8 +54,8 @@ def random_rectangle_vector(vector, box, random_range=(0, 0, 0, 0), padding=15):
         tuple(int), tuple(int): start_point, end_point.
     """
     vector = np.array(vector) + random_rectangle_point(random_range)
-    vector = np.round(vector).astype(np.int)
-    half_vector = np.round(vector / 2).astype(np.int)
+    vector = np.round(vector).astype(int)
+    half_vector = np.round(vector / 2).astype(int)
     box = np.array(box) + np.append(np.abs(half_vector) + padding, -np.abs(half_vector) - padding)
     center = random_rectangle_point(box)
     start_point = center - half_vector
@@ -82,8 +86,8 @@ def random_rectangle_vector_opted(
         tuple(int), tuple(int): start_point, end_point.
     """
     vector = np.array(vector) + random_rectangle_point(random_range)
-    vector = np.round(vector).astype(np.int)
-    half_vector = np.round(vector / 2).astype(np.int)
+    vector = np.round(vector).astype(int)
+    half_vector = np.round(vector / 2).astype(int)
     box_pad = np.array(box) + np.append(np.abs(half_vector) + padding, -np.abs(half_vector) - padding)
     box_pad = area_offset(box_pad, half_vector)
     segment = int(np.linalg.norm(vector) // 70) + 1
@@ -175,6 +179,7 @@ def ensure_int(*args):
     Returns:
         list:
     """
+
     def to_int(item):
         try:
             return int(item)
@@ -189,6 +194,7 @@ def ensure_int(*args):
 
 def area_offset(area, offset):
     """
+    Move an area.
 
     Args:
         area: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y).
@@ -197,11 +203,14 @@ def area_offset(area, offset):
     Returns:
         tuple: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y).
     """
-    return tuple(np.array(area) + np.append(offset, offset))
+    upper_left_x, upper_left_y, bottom_right_x, bottom_right_y = area
+    x, y = offset
+    return upper_left_x + x, upper_left_y + y, bottom_right_x + x, bottom_right_y + y
 
 
 def area_pad(area, pad=10):
     """
+    Inner offset an area.
 
     Args:
         area: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y).
@@ -210,7 +219,8 @@ def area_pad(area, pad=10):
     Returns:
         tuple: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y).
     """
-    return tuple(np.array(area) + np.array([pad, pad, -pad, -pad]))
+    upper_left_x, upper_left_y, bottom_right_x, bottom_right_y = area
+    return upper_left_x + pad, upper_left_y + pad, bottom_right_x - pad, bottom_right_y - pad
 
 
 def limit_in(x, lower, upper):
@@ -327,7 +337,7 @@ def area_cross_area(area1, area2, threshold=5):
     xa1, ya1, xa2, ya2 = area1
     xb1, yb1, xb2, yb2 = area2
     return abs(xb2 + xb1 - xa2 - xa1) <= xa2 - xa1 + xb2 - xb1 + threshold * 2 \
-            and abs(yb2 + yb1 - ya2 - ya1) <= ya2 - ya1 + yb2 - yb1 + threshold * 2
+           and abs(yb2 + yb1 - ya2 - ya1) <= ya2 - ya1 + yb2 - yb1 + threshold * 2
 
 
 def float2str(n, decimal=3):
@@ -355,26 +365,136 @@ def point2str(x, y, length=4):
     return '(%s, %s)' % (str(int(x)).rjust(length), str(int(y)).rjust(length))
 
 
-def node2location(node):
+def col2name(col):
     """
+    Convert a zero indexed column cell reference to a string.
+
     Args:
-        node(str): Example: 'E3'
+       col: The cell column. Int.
 
     Returns:
-        tuple: Example: (6, 4)
+        Column style string.
+
+    Examples:
+        0 -> A, 3 -> D, 35 -> AJ, -1 -> -A
     """
-    return ord(node[0]) % 32 - 1, int(node[1:]) - 1
+
+    col_neg = col < 0
+    if col_neg:
+        col_num = -col
+    else:
+        col_num = col + 1  # Change to 1-index.
+    col_str = ''
+
+    while col_num:
+        # Set remainder from 1 .. 26
+        remainder = col_num % 26
+
+        if remainder == 0:
+            remainder = 26
+
+        # Convert the remainder to a character.
+        col_letter = chr(remainder + 64)
+
+        # Accumulate the column letters, right to left.
+        col_str = col_letter + col_str
+
+        # Get the next order of magnitude.
+        col_num = int((col_num - 1) / 26)
+
+    if col_neg:
+        return '-' + col_str
+    else:
+        return col_str
+
+
+def name2col(col_str):
+    """
+    Convert a cell reference in A1 notation to a zero indexed row and column.
+
+    Args:
+       col_str:  A1 style string.
+
+    Returns:
+        row, col: Zero indexed cell row and column indices.
+    """
+    # Convert base26 column string to number.
+    expn = 0
+    col = 0
+    col_neg = col_str.startswith('-')
+    col_str = col_str.strip('-').upper()
+
+    for char in reversed(col_str):
+        col += (ord(char) - 64) * (26 ** expn)
+        expn += 1
+
+    if col_neg:
+        return -col
+    else:
+        return col - 1  # Convert 1-index to zero-index
+
+
+def node2location(node):
+    """
+    See location2node()
+
+    Args:
+        node (str): Example: 'E3'
+
+    Returns:
+        tuple[int]: Example: (4, 2)
+    """
+    res = REGEX_NODE.search(node)
+    if res:
+        x, y = res.group(1), res.group(2)
+        y = int(y)
+        if y > 0:
+            y -= 1
+        return name2col(x), y
+    else:
+        # Whatever
+        return ord(node[0]) % 32 - 1, int(node[1:]) - 1
 
 
 def location2node(location):
     """
+    Convert location tuple to an Excel-like cell.
+    Accept negative values also.
+
+         -2   -1    0    1    2    3
+    -2 -B-2 -A-2  A-2  B-2  C-2  D-2
+    -1 -B-1 -A-1  A-1  B-1  C-1  D-1
+     0  -B1  -A1   A1   B1   C1   D1
+     1  -B2  -A2   A2   B2   C2   D2
+     2  -B3  -A3   A3   B3   C3   D3
+     3  -B4  -A4   A4   B4   C4   D4
+
+    # To generate the table above
+    index = range(-2, 4)
+    row = '   ' + ' '.join([str(i).rjust(4) for i in index])
+    print(row)
+    for y in index:
+        row = str(y).rjust(2) + ' ' + ' '.join([location2node((x, y)).rjust(4) for x in index])
+        print(row)
+
+    def check(node):
+        return point2str(*node2location(location2node(node)), length=2)
+    row = '   ' + ' '.join([str(i).rjust(8) for i in index])
+    print(row)
+    for y in index:
+        row = str(y).rjust(2) + ' ' + ' '.join([check((x, y)).rjust(4) for x in index])
+        print(row)
+
     Args:
-        location(tuple): Example: (6, 4)
+        location (tuple[int]):
 
     Returns:
-        str: Example: 'E3'
+        str:
     """
-    return chr(location[0] + 64 + 1) + str(location[1] + 1)
+    x, y = location
+    if y >= 0:
+        y += 1
+    return col2name(x) + str(y)
 
 
 def load_image(file, area=None):
@@ -411,7 +531,7 @@ def save_image(image, file):
     Image.fromarray(image).save(file)
 
 
-def crop(image, area):
+def crop(image, area, copy=True):
     """
     Crop image like pillow, when using opencv / numpy.
     Provides a black background if cropping outside of image.
@@ -419,6 +539,7 @@ def crop(image, area):
     Args:
         image (np.ndarray):
         area:
+        copy (bool):
 
     Returns:
         np.ndarray:
@@ -427,9 +548,11 @@ def crop(image, area):
     h, w = image.shape[:2]
     border = np.maximum((0 - y1, y2 - h, 0 - x1, x2 - w), 0)
     x1, y1, x2, y2 = np.maximum((x1, y1, x2, y2), 0)
-    image = image[y1:y2, x1:x2].copy()
+    image = image[y1:y2, x1:x2]
     if sum(border) > 0:
         image = cv2.copyMakeBorder(image, *border, borderType=cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    if copy:
+        image = image.copy()
     return image
 
 
@@ -471,6 +594,21 @@ def image_size(image):
     return shape[1], shape[0]
 
 
+def image_paste(image, background, origin):
+    """
+    Paste an image on background.
+    This method does not return a value, but instead updates the array "background".
+
+    Args:
+        image:
+        background:
+        origin: Upper-left corner, (x, y)
+    """
+    x, y = origin
+    w, h = image_size(image)
+    background[y:y + h, x:x + w] = image
+
+
 def rgb2gray(image):
     """
     Args:
@@ -497,9 +635,38 @@ def rgb2hsv(image):
     Returns:
         np.ndarray: Hue (0~360), Saturation (0~100), Value (0~100).
     """
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV).astype(np.float)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV).astype(float)
     image *= (360 / 180, 100 / 255, 100 / 255)
     return image
+
+
+def rgb2yuv(image):
+    """
+    Convert RGB to YUV color space.
+
+    Args:
+        image (np.ndarray): Shape (height, width, channel)
+
+    Returns:
+        np.ndarray: Shape (height, width)
+    """
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    return image
+
+
+def rgb2luma(image):
+    """
+    Convert RGB to the Y channel (Luminance) in YUV color space.
+
+    Args:
+        image (np.ndarray): Shape (height, width, channel)
+
+    Returns:
+        np.ndarray: Shape (height, width)
+    """
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    luma, _, _ = cv2.split(image)
+    return luma
 
 
 def get_color(image, area):
@@ -512,26 +679,45 @@ def get_color(image, area):
     Returns:
         tuple: (r, g, b)
     """
-    temp = crop(image, area)
+    temp = crop(image, area, copy=False)
     color = cv2.mean(temp)
     return color[:3]
 
 
-def get_bbox(image):
+def get_bbox(image, threshold=0):
     """
     A numpy implementation of the getbbox() in pillow.
 
     Args:
         image (np.ndarray): Screenshot.
+        threshold (int): Color <= threshold will be considered black
 
     Returns:
         tuple: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y)
     """
     if image_channel(image) == 3:
         image = np.max(image, axis=2)
-    x = np.where(np.max(image, axis=0) > 0)[0]
-    y = np.where(np.max(image, axis=1) > 0)[0]
-    return (x[0], y[0], x[-1] + 1, y[-1] + 1)
+    x = np.where(np.max(image, axis=0) > threshold)[0]
+    y = np.where(np.max(image, axis=1) > threshold)[0]
+    return x[0], y[0], x[-1] + 1, y[-1] + 1
+
+
+def get_bbox_reversed(image, threshold=0):
+    """
+    Similar to `get_bbox` but for black contents on white background.
+
+    Args:
+        image (np.ndarray): Screenshot.
+        threshold (int): Color >= threshold will be considered white
+
+    Returns:
+        tuple: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y)
+    """
+    if image_channel(image) == 3:
+        image = np.min(image, axis=2)
+    x = np.where(np.min(image, axis=0) < threshold)[0]
+    y = np.where(np.min(image, axis=1) < threshold)[0]
+    return x[0], y[0], x[-1] + 1, y[-1] + 1
 
 
 def color_similarity(color1, color2):

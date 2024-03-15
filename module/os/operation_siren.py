@@ -12,7 +12,7 @@ from module.map.map_grids import SelectedGrids
 from module.os.fleet import BossFleet
 from module.os.globe_operation import OSExploreError
 from module.os.map import OSMap
-from module.os_handler.action_point import OCR_OS_ADAPTABILITY
+from module.os_handler.action_point import OCR_OS_ADAPTABILITY, ActionPointLimit
 from module.os_handler.assets import OS_MONTHBOSS_NORMAL, OS_MONTHBOSS_HARD, EXCHANGE_CHECK, EXCHANGE_ENTER
 from module.shop.shop_voucher import VoucherShop
 
@@ -167,13 +167,19 @@ class OperationSiren(OSMap):
                 continue
 
         logger.hr('OpSi reset', level=3)
-        logger.hr('OpSi clear daily', level=1)
 
         def false_func(*args, **kwargs):
             return False
 
         self.is_in_opsi_explore = false_func
         self.config.task_switched = false_func
+
+        logger.hr('OpSi clear daily', level=1)
+        self.config.override(
+            OpsiGeneral_DoRandomMapEvent=True,
+            OpsiFleet_Fleet=self.config.cross_get('OpsiDaily.OpsiFleet.Fleet'),
+            OpsiFleet_Submarine=False,
+        )
         count = 0
         empty_trial = 0
         while 1:
@@ -229,7 +235,7 @@ class OperationSiren(OSMap):
                 self.os_order_execute(
                     recon_scan=True,
                     submarine_call=False)
-                self.run_auto_search(rescan=False)
+                self.run_auto_search(rescan='current')
                 self.map_exit()
                 self.handle_after_auto_search()
             else:
@@ -302,7 +308,17 @@ class OperationSiren(OSMap):
             self.config.override(
                 OpsiGeneral_DoRandomMapEvent=True,
                 OpsiGeneral_AkashiShopFilter='ActionPoint',
+                OpsiFleet_Submarine=False,
             )
+            cd = self.nearest_task_cooling_down
+            logger.attr('Task cooling down', cd)
+            # At the last day of every month, OpsiObscure and OpsiAbyssal are scheduled frequently
+            # Don't schedule after them
+            remain = get_os_reset_remain()
+            if cd is not None and remain > 0:
+                logger.info(f'Having task cooling down, delay OpsiMeowfficerFarming after it')
+                self.config.task_delay(target=cd.next_run)
+                self.config.task_stop()
         if self.is_in_opsi_explore():
             logger.warning(f'OpsiExplore is still running, cannot do {self.config.task.command}')
             self.config.task_delay(server_update=True)
@@ -311,7 +327,7 @@ class OperationSiren(OSMap):
         ap_checked = False
         while 1:
             self.config.OS_ACTION_POINT_PRESERVE = preserve
-            if self.config.OpsiAshBeacon_AshAttack \
+            if self.config.is_task_enabled('OpsiAshBeacon') \
                     and not self._ash_fully_collected \
                     and self.config.OpsiAshBeacon_EnsureFullyCollected:
                 logger.info('Ash beacon not fully collected, ignore action point limit temporarily')
@@ -322,11 +338,18 @@ class OperationSiren(OSMap):
                 # When not running CL1 and use oil
                 keep_current_ap = True
                 check_rest_ap = True
-                if self.is_cl1_enabled:
-                    check_rest_ap = False
                 if not self.is_cl1_enabled and self.config.OpsiGeneral_BuyActionPointLimit > 0:
                     keep_current_ap = False
-                self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap)
+                if self.is_cl1_enabled and self.get_yellow_coins() >= self.config.OS_CL1_YELLOW_COINS_PRESERVE:
+                    check_rest_ap = False
+                    try:
+                        self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap)
+                    except ActionPointLimit:
+                        self.config.task_delay(server_update=True)
+                        self.config.task_call('OpsiHazard1Leveling')
+                        self.config.task_stop()
+                else:
+                    self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap)
                 ap_checked = True
 
             # (1252, 1012) is the coordinate of zone 134 (the center zone) in os_globe_map.png
@@ -370,12 +393,12 @@ class OperationSiren(OSMap):
             OpsiGeneral_DoRandomMapEvent=True,
             OpsiGeneral_AkashiShopFilter='ActionPoint',
         )
-        if not self.config.cross_get(keys='OpsiMeowfficerFarming.Scheduler.Enable', default=False):
+        if not self.config.is_task_enabled('OpsiMeowfficerFarming'):
             self.config.cross_set(keys='OpsiMeowfficerFarming.Scheduler.Enable', value=True)
         while 1:
             # Limited action point preserve of hazard 1 to 200
             self.config.OS_ACTION_POINT_PRESERVE = 200
-            if self.config.OpsiAshBeacon_AshAttack \
+            if self.config.is_task_enabled('OpsiAshBeacon') \
                     and not self._ash_fully_collected \
                     and self.config.OpsiAshBeacon_EnsureFullyCollected:
                 logger.info('Ash beacon not fully collected, ignore action point limit temporarily')
@@ -392,12 +415,12 @@ class OperationSiren(OSMap):
 
             self.get_current_zone()
 
-            # Preset action point to 100
+            # Preset action point to 70
             # When running CL1 oil is for running CL1, not meowfficer farming
             keep_current_ap = True
             if self.config.OpsiGeneral_BuyActionPointLimit > 0:
                 keep_current_ap = False
-            self.action_point_set(cost=100, keep_current_ap=keep_current_ap, check_rest_ap=True)
+            self.action_point_set(cost=70, keep_current_ap=keep_current_ap, check_rest_ap=True)
             if self._action_point_total >= 3000:
                 with self.config.multi_set():
                     self.config.task_delay(server_update=True)
@@ -408,7 +431,7 @@ class OperationSiren(OSMap):
             if self.config.OpsiHazard1Leveling_TargetZone != 0:
                 zone = self.config.OpsiHazard1Leveling_TargetZone
             else:
-                zone = 44
+                zone = 22
             logger.hr(f'OS hazard 1 leveling, zone_id={zone}', level=1)
             if self.zone.zone_id != zone or not self.is_zone_name_hidden:
                 self.globe_goto(self.name_to_zone(zone), types='SAFE', refresh=True)
@@ -433,13 +456,6 @@ class OperationSiren(OSMap):
                     logger.info(f'Delay task `{task}` to {next_run}')
                     self.config.cross_set(keys=keys, value=next_run)
 
-            # ResetActionPointPreserve
-            # Unbound attribute, default to 500
-            preserve = self.config.OpsiMeowfficerFarming_ActionPointPreserve
-            logger.info(f'Set OpsiMeowfficerFarming.ActionPointPreserve to {preserve}')
-            self.config.cross_set(
-                keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve', value=preserve)
-
     def _os_explore(self):
         """
         Explore all dangerous zones at the beginning of month.
@@ -452,6 +468,7 @@ class OperationSiren(OSMap):
             logger.info('To run again, clear OpsiExplore.Scheduler.NextRun and set OpsiExplore.OpsiExplore.LastZone=0')
             with self.config.multi_set():
                 self.config.OpsiExplore_LastZone = 0
+                self.config.OpsiExplore_SpecialRadar = False
                 self.config.task_delay(target=next_reset)
                 self.config.task_call('OpsiDaily', force_call=False)
                 self.config.task_call('OpsiShop', force_call=False)
@@ -544,7 +561,7 @@ class OperationSiren(OSMap):
         self.os_order_execute(
             recon_scan=True,
             submarine_call=self.config.OpsiFleet_Submarine)
-        self.run_auto_search(rescan=False)
+        self.run_auto_search(rescan='current')
 
         self.map_exit()
         self.handle_after_auto_search()
@@ -585,7 +602,8 @@ class OperationSiren(OSMap):
         logger.hr('OS clear abyssal', level=1)
         self.cl1_ap_preserve()
 
-        result = self.storage_get_next_item('ABYSSAL', use_logger=self.config.OpsiGeneral_UseLogger)
+        with self.config.temporary(STORY_ALLOW_SKIP=False):
+            result = self.storage_get_next_item('ABYSSAL', use_logger=self.config.OpsiGeneral_UseLogger)
         if not result:
             self.delay_abyssal(result=False)
 
@@ -616,6 +634,11 @@ class OperationSiren(OSMap):
         Run on weekly basis, AL devs seemingly add new logger
         archives after random scheduled maintenances
         """
+        if self.is_in_opsi_explore():
+            logger.info('OpsiExplore is under scheduling, stop OpsiArchive')
+            self.config.task_delay(server_update=True)
+            self.config.task_stop()
+
         shop = VoucherShop(self.config, self.device)
         while 1:
             # In case logger bought manually,
@@ -757,8 +780,12 @@ class OperationSiren(OSMap):
             ActionPointLimit
             TaskEnd: if no more month boss
         """
-        logger.hr("OS clear Month Boss", level=1)
+        if self.is_in_opsi_explore():
+            logger.info('OpsiExplore is under scheduling, stop OpsiMonthBoss')
+            self.config.task_delay(server_update=True)
+            self.config.task_stop()
 
+        logger.hr("OS clear Month Boss", level=1)
         logger.hr("Month Boss precheck", level=2)
         self.os_mission_enter()
         logger.attr('OpsiMonthBoss.Mode', self.config.OpsiMonthBoss_Mode)
@@ -771,7 +798,7 @@ class OperationSiren(OSMap):
         else:
             logger.info("No Normal/Hard boss found, stop")
             self.os_mission_quit()
-            self.month_boss_delay(is_normal=False, result=True)
+            self.month_boss_delay(is_normal=False, result=False)
             return True
         self.os_mission_quit()
 
@@ -830,7 +857,8 @@ class OperationSiren(OSMap):
                 self.config.task_delay(target=next_reset)
                 self.config.task_stop()
             else:
-                logger.info("Unable to clear the hard monthly boss, task stop")
+                logger.info("Unable to clear the hard monthly boss, try again on tomorrow")
+                self.config.task_delay(server_update=True)
                 self.config.task_stop()
 
 

@@ -7,8 +7,10 @@
 Restart:
   Scheduler:
     Enable:
+      type: state
       value: true
-      display: disabled
+      option: [ true, ]
+      option_bold: [ true, ]
     SuccessInterval: 0
     FailureInterval: 0
     ServerUpdate: 00:00
@@ -29,11 +31,21 @@ GemsFarming:
     Event:
       value: campaign_main
     Mode: normal
+    UseClearMode: true
+    UseFleetLock: true
+    Use2xBook: false
     AmbushEvade: true
   StopCondition:
+    RunCount: 0
     MapAchievement: non_stop
     StageIncrease: false
     GetNewShip: false
+    ReachLevel: 0
+  Fleet:
+    FleetOrder:
+      display: display
+      value: fleet1_all_fleet2_standby
+      option: [ fleet1_all_fleet2_standby, fleet1_standby_fleet2_all ]
 
 # ==================== Event ====================
 
@@ -41,13 +53,13 @@ Event:
   Campaign:
     Mode: normal
     Event:
-      display: disabled
+      type: state
     AmbushEvade: true
 Event2:
   Campaign:
     Mode: normal
     Event:
-      display: disabled
+      type: state
     AmbushEvade: true
 EventA:
   Scheduler:
@@ -57,7 +69,7 @@ EventA:
   Campaign:
     Name: dynamic
     Event:
-      display: disabled
+      type: state
     Mode: normal
     Use2xBook: false
     AmbushEvade: true
@@ -75,7 +87,7 @@ EventB:
   Campaign:
     Name: dynamic
     Event:
-      display: disabled
+      type: state
     Mode: normal
     Use2xBook: false
     AmbushEvade: true
@@ -93,7 +105,7 @@ EventC:
   Campaign:
     Name: dynamic
     Event:
-      display: disabled
+      type: state
     Mode: normal
     Use2xBook: false
     AmbushEvade: true
@@ -111,7 +123,7 @@ EventD:
   Campaign:
     Name: dynamic
     Event:
-      display: disabled
+      type: state
     Mode: normal
     Use2xBook: false
     AmbushEvade: true
@@ -129,7 +141,7 @@ EventSp:
   Campaign:
     Name: sp
     Event:
-      display: disabled
+      type: state
     Mode: normal
     Use2xBook: false
     AmbushEvade: true
@@ -145,7 +157,7 @@ Raid:
   Campaign:
     Name: dynamic
     Event:
-      display: disabled
+      type: state
     Mode: normal
     UseClearMode: true
     UseFleetLock: true
@@ -171,7 +183,7 @@ RaidDaily:
   Campaign:
     Name: dynamic
     Event:
-      display: disabled
+      type: state
     Mode: normal
     UseClearMode: true
     UseFleetLock: true
@@ -195,6 +207,57 @@ MaritimeEscort:
     SuccessInterval: 30
     FailureInterval: 30
     ServerUpdate: 00:00
+Coalition:
+  Scheduler:
+    SuccessInterval: 30
+    FailureInterval: 30
+    ServerUpdate: 00:00
+  Campaign:
+    Event:
+      type: state
+    Mode: normal
+    UseClearMode: true
+    UseFleetLock: true
+    UseAutoSearch: false
+    Use2xBook: false
+    AmbushEvade: true
+  StopCondition:
+    MapAchievement: non_stop
+    StageIncrease: false
+    GetNewShip: false
+    ReachLevel: 0
+  Emotion:
+    Fleet2Value: 119
+    Fleet2Record: 2020-01-01 00:00:00
+    Fleet2Control: prevent_yellow_face
+    Fleet2Recover: not_in_dormitory
+    Fleet2Oath: false
+CoalitionSp:
+  Scheduler:
+    SuccessInterval: 30
+    FailureInterval: 30
+    ServerUpdate: 00:00
+  Campaign:
+    Name: sp
+    Event:
+      type: state
+    Mode: normal
+    UseClearMode: true
+    UseFleetLock: true
+    UseAutoSearch: false
+    Use2xBook: false
+    AmbushEvade: true
+  StopCondition:
+    MapAchievement: non_stop
+    StageIncrease: false
+    GetNewShip: false
+    ReachLevel: 0
+  Emotion:
+    Fleet2Value: 119
+    Fleet2Record: 2020-01-01 00:00:00
+    Fleet2Control: prevent_yellow_face
+    Fleet2Recover: not_in_dormitory
+    Fleet2Oath: false
 
 # ==================== Reward ====================
 
@@ -276,28 +339,6 @@ Exercise:
     SuccessInterval: 30
     FailureInterval: 30
     ServerUpdate: 00:00, 12:00, 18:00
-Sos:
-  Scheduler:
-    SuccessInterval: 30
-    FailureInterval: 30
-    ServerUpdate: 00:00
-  Campaign:
-    Name: dynamic
-    Event: campaign_main
-    Mode: normal
-    UseClearMode: true
-    UseFleetLock: true
-    UseAutoSearch: false
-    Use2xBook: false
-    AmbushEvade: true
-  StopCondition:
-    RunCount: 0
-    MapAchievement: non_stop
-    StageIncrease: false
-    GetNewShip: false
-    ReachLevel: 0
-  Submarine:
-    AutoSearchMode: sub_standby
 WarArchives:
   Scheduler:
     SuccessInterval: 30
@@ -368,6 +409,6 @@ OpsiHazard1Leveling:
   Scheduler:
     SuccessInterval: 30
     FailureInterval: 60
-    ServerUpdate: 00:00
+    ServerUpdate: 00:00, 12:00
   OpsiFleet:
     Submarine: false

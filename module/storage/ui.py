@@ -12,12 +12,14 @@ from module.ui.ui import UI
 class StorageUI(UI):
     @cached_property
     def storage_filter(self) -> Setting:
+        delta = (147 + 1 / 3, 57)
+        button_shape = (139, 42)
         setting = Setting(name='STORAGE', main=self)
         setting.add_setting(
             setting='rarity',
             option_buttons=ButtonGrid(
-                origin=(284, 446), delta=(158, 0), button_shape=(137, 38), grid_shape=(6, 1), name='FILTER_RARITY'),
-            option_names=['all', 'common', 'rare', 'elite', 'super_rare', 'ultra_rare'],
+                origin=(219, 444), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
+            option_names=['all', 'common', 'rare', 'elite', 'super_rare', 'ultra_rare', 'not_available'],
             option_default='all'
         )
         return setting
@@ -116,6 +118,7 @@ class StorageUI(UI):
             out: page_storage, disassemble, DISASSEMBLE_CANCEL
         """
         logger.info('storage enter disassemble')
+        self.appear(STORAGE_CHECK, interval=3)
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -146,7 +149,8 @@ class StorageUI(UI):
 
     def _equipment_filter_enter(self):
         self.interval_clear(EQUIPMENT_FILTER)
-        self.ui_click(EQUIPMENT_FILTER, check_button=EQUIPMENT_FILTER_CONFIRM, skip_first_screenshot=True)
+        self.ui_click(EQUIPMENT_FILTER, appear_button=STORAGE_CHECK, check_button=EQUIPMENT_FILTER_CONFIRM,
+                      skip_first_screenshot=True)
 
     def _equipment_filter_confirm(self):
         self.interval_clear(EQUIPMENT_FILTER_CONFIRM)

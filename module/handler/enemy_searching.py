@@ -1,6 +1,5 @@
 from module.base.decorator import del_cached_property
 from module.base.timer import Timer
-from module.base.utils import get_color, red_overlay_transparency
 from module.exception import CampaignEnd
 from module.handler.assets import *
 from module.handler.info_handler import InfoHandler
@@ -18,15 +17,16 @@ class EnemySearchingHandler(InfoHandler):
     map_is_100_percent_clear = False  # Will be override in fast_forward.py
 
     def enemy_searching_color_initial(self):
-        MAP_ENEMY_SEARCHING.load_color(self.device.image)
+        pass
 
     def enemy_searching_appear(self):
         if not self.is_in_map():
             return False
 
-        return red_overlay_transparency(
-            MAP_ENEMY_SEARCHING.color, get_color(self.device.image, MAP_ENEMY_SEARCHING.area)
-        ) > self.MAP_ENEMY_SEARCHING_OVERLAY_TRANSPARENCY_THRESHOLD
+        if MAP_ENEMY_SEARCHING.match_luma(self.device.image, offset=(5, 5)):
+            return True
+
+        return False
 
     def handle_enemy_flashing(self):
         self.device.sleep(1.2)
@@ -40,16 +40,21 @@ class EnemySearchingHandler(InfoHandler):
             else:
                 return False
         else:
-            if self.appear(MAP_PREPARATION, offset=(20, 20)) or self.appear(FLEET_PREPARATION, offset=(20, 20)):
+            if self.appear(MAP_PREPARATION, offset=(20, 20)) or self.appear(FLEET_PREPARATION, offset=(20, 50)):
                 self.device.click(MAP_PREPARATION_CANCEL)
             self.in_stage_timer.reset()
             return False
 
-    def is_in_stage(self):
-        appear = [self.appear(check, offset=(20, 20)) for check in [CAMPAIGN_CHECK, EVENT_CHECK, SP_CHECK]]
-        if not any(appear):
-            return False
+    def is_in_stage_page(self):
+        for check in [CAMPAIGN_CHECK, EVENT_CHECK, SP_CHECK]:
+            if self.appear(check, offset=(20, 20)):
+                return True
+        return False
 
+    def is_stage_page_has_entrance(self):
+        """
+        Has any stage entrance, which means stage page is fully loaded
+        """
         # campaign_extract_name_image in CampaignOcr.
         try:
             if hasattr(self, 'campaign_extract_name_image'):
@@ -60,6 +65,13 @@ class EnemySearchingHandler(InfoHandler):
         except IndexError:
             return False
 
+        return True
+
+    def is_in_stage(self):
+        if not self.is_in_stage_page():
+            return False
+        if not self.is_stage_page_has_entrance():
+            return False
         return True
 
     def is_in_map(self):

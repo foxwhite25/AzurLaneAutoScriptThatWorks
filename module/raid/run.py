@@ -1,7 +1,9 @@
+from module.base.timer import Timer
 from module.campaign.campaign_event import CampaignEvent
 from module.exception import ScriptEnd, ScriptError
 from module.logger import logger
-from module.raid.raid import OilExhausted, Raid
+from module.raid.assets import RAID_REWARDS
+from module.raid.raid import OilExhausted, Raid, raid_ocr
 from module.ui.page import page_raid
 
 
@@ -22,6 +24,46 @@ class RaidRun(Raid, CampaignEvent):
             return True
 
         return False
+
+    def get_remain(self, mode, skip_first_screenshot=True):
+        """
+        Args:
+            mode (str): easy, normal, hard, ex
+            skip_first_screenshot (bool):
+
+        Returns:
+            int:
+        """
+        confirm_timer = Timer(0.3, count=0)
+        prev = 30
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            ocr = raid_ocr(raid=self.config.Campaign_Event, mode=mode)
+            result = ocr.ocr(self.device.image)
+            if mode == 'ex':
+                remain = result
+            else:
+                remain, _, _ = result
+            logger.attr(f'{mode.capitalize()} Remain', remain)
+
+            if self.appear_then_click(RAID_REWARDS, offset=(30, 30), interval=3):
+                confirm_timer.reset()
+                continue
+
+            # End
+            if remain == prev:
+                if confirm_timer.reached():
+                    break
+            else:
+                confirm_timer.reset()
+
+            prev = remain
+
+        return remain
 
     def run(self, name='', mode='', total=0):
         """
@@ -56,9 +98,24 @@ class RaidRun(Raid, CampaignEvent):
                 break
 
             # UI ensure
+            self.device.stuck_record_clear()
+            self.device.click_record_clear()
             self.ui_ensure(page_raid)
 
+            # End for mode EX
+            if mode == 'ex':
+                if not self.get_remain(mode):
+                    logger.info('Triggered stop condition: Zero '
+                                'raid tickets to do EX mode')
+                    if self.config.task.command == 'Raid':
+                        with self.config.multi_set():
+                            self.config.StopCondition_RunCount = 0
+                            self.config.Scheduler_Enable = False
+                    break
+
             # Run
+            self.device.stuck_record_clear()
+            self.device.click_record_clear()
             try:
                 self.raid_execute_once(mode=mode, raid=name)
             except OilExhausted:

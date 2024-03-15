@@ -15,14 +15,15 @@ class ManualConfig:
     > Exercise
     > Dorm > Meowfficer > Guild > Gacha
     > Reward
-    > ShopFrequent > ShopOnce > Shipyard > Freebies
+    > ShopFrequent > ShopOnce > Shipyard > Freebies > Minigame
     > OpsiExplore
     > OpsiAshBeacon
     > OpsiDaily > OpsiShop > OpsiVoucher
     > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
     > Daily > Hard > OpsiAshBeacon > OpsiAshAssist  > OpsiMonthBoss
-    > Sos > EventSp > EventA > EventB > EventC > EventD > RaidDaily > WarArchives > MaritimeEscort
-    > Event > Event2 > Raid > Main > Main2 > Main3
+    > Sos > EventSp > EventA > EventB > EventC > EventD
+    > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
+    > Event > Event2 > Raid > Coalition > Main > Main2 > Main3
     > OpsiMeowfficerFarming
     > GemsFarming
     > OpsiHazard1Leveling
@@ -32,6 +33,8 @@ class ManualConfig:
     module.assets
     """
     ASSETS_FOLDER = './assets'
+    ASSETS_MODULE = './module'
+    ASSETS_RESOLUTION = (1280, 720)
 
     """
     module.base
@@ -78,10 +81,8 @@ class ManualConfig:
 
     # 'DroidCast', 'DroidCast_raw'
     DROIDCAST_VERSION = 'DroidCast'
-    DROIDCAST_FILEPATH_LOCAL = './bin/DroidCast/DroidCast-debug-1.1.0.apk'
-    DROIDCAST_FILEPATH_REMOTE = '/data/local/tmp/DroidCast.apk'
-    DROIDCAST_RAW_FILEPATH_LOCAL = './bin/DroidCast/DroidCastS-release-1.1.5.apk'
-    DROIDCAST_RAW_FILEPATH_REMOTE = '/data/local/tmp/DroidCastS.apk'
+    DROIDCAST_FILEPATH_LOCAL = './bin/DroidCast/DroidCast_raw-release-1.0.apk'
+    DROIDCAST_FILEPATH_REMOTE = '/data/local/tmp/DroidCast_raw.apk'
 
     MINITOUCH_FILEPATH_REMOTE = '/data/local/tmp/minitouch'
 
@@ -89,6 +90,9 @@ class ManualConfig:
 
     SCRCPY_FILEPATH_LOCAL = './bin/scrcpy/scrcpy-server-v1.20.jar'
     SCRCPY_FILEPATH_REMOTE = '/data/local/tmp/scrcpy-server-v1.20.jar'
+
+    MAATOUCH_FILEPATH_LOCAL = './bin/MaaTouch/maatouch'
+    MAATOUCH_FILEPATH_REMOTE = '/data/local/tmp/maatouch'
 
     """
     module.campaign.gems_farming
@@ -99,10 +103,18 @@ class ManualConfig:
     module.handler
     """
     STORY_OPTION = 0
+    # Dirty patch to fix a game bug on game client
+    # 2023.09.07 AL story skip will skip story options
+    # but ridiculous that options that must be selected are skipped too
+    # such as compulsory confirm before abyssal, interaction of siren scanning devices and logging devices
+    # Don't click SKIP at the situation above
+    STORY_ALLOW_SKIP = True
 
     """
     module.map.fleet
     """
+    MAP_HAS_CLEAR_PERCENTAGE = True
+    MAP_HAS_WALK_SPEEDUP = False
     MAP_HAS_AMBUSH = True
     MAP_HAS_FLEET_STEP = False
     MAP_HAS_MOVABLE_ENEMY = False
@@ -140,9 +152,18 @@ class ManualConfig:
     # Convert map grid distance to swipe distance
     # Usually range from 1/0.62 to 1/0.61
     # Value may be different in different maps
-    MAP_SWIPE_MULTIPLY = 1.626
-    # When using minitouch, MAP_SWIPE_MULTIPLY is a fixed value.
-    MAP_SWIPE_MULTIPLY_MINITOUCH = 1.572
+    # Before 2023.05.25
+    # MAP_SWIPE_MULTIPLY = 1.626
+    # MAP_SWIPE_MULTIPLY_MINITOUCH = 1.572
+    # MAP_SWIPE_MULTIPLY_MINITOUCH = 1.525
+    # 2023.05.25, swipe fit in 14-1
+    # MAP_SWIPE_MULTIPLY = (1.006, 1.025)
+    # MAP_SWIPE_MULTIPLY_MINITOUCH = (0.973, 0.991)
+    # MAP_SWIPE_MULTIPLY_MAATOUCH = (0.944, 0.961)
+    # 2023.05.25, swipe converts to 7-2 baseline
+    MAP_SWIPE_MULTIPLY = (1.064, 1.084)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.029, 1.048)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (0.999, 1.017)
     # Swipe distance in map grid lower than this will be dropped,
     # because a closing swipe will be treat as a click in game.
     MAP_SWIPE_DROP = 0.15
@@ -189,7 +210,7 @@ class ManualConfig:
     HOMO_RECTANGLE_THRESHOLD = 10
 
     HOMO_EDGE_DETECT = True
-    HOMO_EDGE_HOUGHLINES_THRESHOLD = 140
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 180
     HOMO_EDGE_COLOR_RANGE = (0, 33)
     # ((x, y), [upper-left, upper-right, bottom-left, bottom-right])
     HOMO_STORAGE = None
@@ -322,6 +343,8 @@ class ManualConfig:
         'distance': 35,
         'wlen': 500,
     }
+    # On minitouch, Screen swipe (200, 200) = Map swipe (382, 442)
+    OS_GLOBE_SWIPE_MULTIPLY = (1.91, 2.21)
 
     """
     module.retire

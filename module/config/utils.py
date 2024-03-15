@@ -43,7 +43,7 @@ def filepath_args(filename='args', mod_name='alas'):
     if mod_name == 'alas':
         return f'./module/config/argument/{filename}.json'
     else:
-        return os.path.join(filepath_mod(mod_name), f'./module/config/argument/{filename}.json')
+        return os.path.join(get_mod_filepath(mod_name), f'./module/config/argument/{filename}.json')
 
 
 def filepath_argument(filename):
@@ -54,7 +54,7 @@ def filepath_i18n(lang, mod_name='alas'):
     if mod_name == 'alas':
         return os.path.join('./module/config/i18n', f'{lang}.json')
     else:
-        return os.path.join(filepath_mod(mod_name), './module/config/i18n', f'{lang}.json')
+        return os.path.join(get_mod_filepath(mod_name), './module/config/i18n', f'{lang}.json')
 
 
 def filepath_config(filename, mod_name='alas'):
@@ -96,6 +96,8 @@ def read_file(file):
                 data = list(yaml.safe_load_all(s))
                 if len(data) == 1:
                     data = data[0]
+                if not data:
+                    data = {}
                 return data
         elif ext == '.json':
             with open(file, mode='r', encoding='utf-8') as f:
@@ -173,7 +175,7 @@ def alas_template():
         if name == 'template' and extension == '.json':
             out.append(f'{name}-alas')
 
-    out.extend(mod_template())
+    out.extend(list_mod_template())
 
     return out
 
@@ -191,7 +193,7 @@ def alas_instance():
         if name != 'template' and extension == '.json' and mod_name == '':
             out.append(name)
 
-    out.extend(mod_instance())
+    out.extend(list_mod_instance())
 
     if not len(out):
         out = ['alas']
@@ -588,6 +590,17 @@ def get_nearest_weekday_date(target):
 
     local_reset = server_reset + diff
     return local_reset
+
+
+def get_server_weekday():
+    """
+    Returns:
+        int: The server's current day of the week
+    """
+    diff = server_time_offset()
+    server_now = datetime.now() - diff
+    result = server_now.weekday()
+    return result
 
 
 def random_id(length=32):
