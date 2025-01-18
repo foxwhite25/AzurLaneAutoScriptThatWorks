@@ -15,12 +15,13 @@ class ManualConfig:
     > Exercise
     > Dorm > Meowfficer > Guild > Gacha
     > Reward
-    > ShopFrequent > ShopOnce > Shipyard > Freebies > Minigame
+    > ShopFrequent > ShopOnce > Shipyard > Freebies
     > OpsiExplore
+    > Minigame > Awaken
     > OpsiAshBeacon
     > OpsiDaily > OpsiShop > OpsiVoucher
     > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
-    > Daily > Hard > OpsiAshBeacon > OpsiAshAssist  > OpsiMonthBoss
+    > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
     > Sos > EventSp > EventA > EventB > EventC > EventD
     > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
     > Event > Event2 > Raid > Coalition > Main > Main2 > Main3
@@ -39,9 +40,7 @@ class ManualConfig:
     """
     module.base
     """
-    COLOR_SIMILAR_THRESHOLD = 10
     BUTTON_OFFSET = 30
-    BUTTON_MATCH_SIMILARITY = 0.85
     WAIT_BEFORE_SAVING_SCREEN_SHOT = 1
 
     """
@@ -91,8 +90,8 @@ class ManualConfig:
     SCRCPY_FILEPATH_LOCAL = './bin/scrcpy/scrcpy-server-v1.20.jar'
     SCRCPY_FILEPATH_REMOTE = '/data/local/tmp/scrcpy-server-v1.20.jar'
 
-    MAATOUCH_FILEPATH_LOCAL = './bin/MaaTouch/maatouch'
-    MAATOUCH_FILEPATH_REMOTE = '/data/local/tmp/maatouch'
+    MAATOUCH_FILEPATH_LOCAL = './bin/MaaTouch/maatouchsync'
+    MAATOUCH_FILEPATH_REMOTE = '/data/local/tmp/maatouchsync'
 
     """
     module.campaign.gems_farming
@@ -113,6 +112,9 @@ class ManualConfig:
     """
     module.map.fleet
     """
+    MAP_HAS_MODE_SWITCH = False  # event_20240725_cn has mode switch in map preparation
+    # Events from 20240725 to 20241219 introduced new chapter switches
+    MAP_CHAPTER_SWITCH_20241219 = False
     MAP_HAS_CLEAR_PERCENTAGE = True
     MAP_HAS_WALK_SPEEDUP = False
     MAP_HAS_AMBUSH = True
@@ -139,10 +141,12 @@ class ManualConfig:
     MAP_ENEMY_GENRE_SIMILARITY = 0.85
     MAP_SIREN_MOVE_WAIT = 1.5  # The enemy moving takes about 1.2 ~ 1.5s.
     MAP_SIREN_COUNT = 0
+    MAP_SIREN_HAS_BOSS_ICON = False  # Anonymous siren with small boss icon at bottom-right
+    MAP_SIREN_HAS_BOSS_ICON_SMALL = False
     MAP_HAS_MYSTERY = True
     MAP_MYSTERY_MAP_CLICK = True
     MAP_MYSTERY_HAS_CARRIER = False
-    MAP_GRID_CENTER_TOLERANCE = 0.1
+    MAP_GRID_CENTER_TOLERANCE = 0.2
 
     MOVABLE_ENEMY_FLEET_STEP = 2
     MOVABLE_ENEMY_TURN = (2,)
@@ -166,7 +170,7 @@ class ManualConfig:
     MAP_SWIPE_MULTIPLY_MAATOUCH = (0.999, 1.017)
     # Swipe distance in map grid lower than this will be dropped,
     # because a closing swipe will be treat as a click in game.
-    MAP_SWIPE_DROP = 0.15
+    MAP_SWIPE_DROP = 0.25
     # Swipes may stop in middle, due to emulator stuck.
     # Predict actual swipe distance to correct camera.
     MAP_SWIPE_PREDICT = True
@@ -179,7 +183,7 @@ class ManualConfig:
     # Use the green arrow on current fleet to decide if fleet arrived a certain grid
     MAP_WALK_USE_CURRENT_FLEET = False
     # Optimize walk path, reducing ambushes
-    MAP_WALK_OPTIMIZE = True
+    MAP_WALK_TURNING_OPTIMIZE = True
     # Optimize swipe path, reducing swipes turn info clicks.
     MAP_SWIPE_OPTIMIZE = True
     # Swipe after boss appear. Could avoid map detection error when camera is on edge.
@@ -321,6 +325,8 @@ class ManualConfig:
     OS_ACTION_POINT_BOX_USE = True
     OS_ACTION_POINT_PRESERVE = 0
     OS_CL1_YELLOW_COINS_PRESERVE = 100000
+    OS_NORMAL_YELLOW_COINS_PRESERVE = 35000
+    OS_NORMAL_PURPLE_COINS_PRESERVE = 100
 
     """
     module.os.globe_detection
@@ -351,7 +357,6 @@ class ManualConfig:
     """
     DOCK_FULL_TRIGGERED = False
     GET_SHIP_TRIGGERED = False
-    RETIRE_KEEP_COMMON_CV = False
     COMMON_CV_THRESHOLD = 0.9
 
     """

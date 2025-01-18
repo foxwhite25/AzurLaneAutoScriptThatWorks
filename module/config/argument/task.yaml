@@ -10,7 +10,7 @@ Alas:
   tasks:
     Alas:
       - Emulator
-      - RestartEmulator
+      - EmulatorInfo
       - Error
       - Optimization
       - DropRecord
@@ -215,6 +215,9 @@ Reward:
     Reward:
       - Scheduler
       - Reward
+    Awaken:
+      - Scheduler
+      - Awaken
 
 # ==================== DailyMission ====================
 

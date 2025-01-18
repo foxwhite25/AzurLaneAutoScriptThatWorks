@@ -8,6 +8,7 @@ from module.ui.assets import MISSION_CHECK
 from module.ui.navbar import Navbar
 from module.ui.page import page_main, page_mission, page_reward
 from module.ui.ui import UI
+from module.ui_white.assets import MISSION_NOTICE_WHITE
 
 
 class Reward(UI):
@@ -40,15 +41,15 @@ class Reward(UI):
             else:
                 self.device.screenshot()
 
-            if oil and click_timer.reached() and self.appear_then_click(OIL, interval=60):
+            if oil and click_timer.reached() and self.appear_then_click(OIL, offset=(20, 50), interval=60):
                 confirm_timer.reset()
                 click_timer.reset()
                 continue
-            if coin and click_timer.reached() and self.appear_then_click(COIN, interval=60):
+            if coin and click_timer.reached() and self.appear_then_click(COIN, offset=(25, 50), interval=60):
                 confirm_timer.reset()
                 click_timer.reset()
                 continue
-            if exp and click_timer.reached() and self.appear_then_click(EXP, interval=60):
+            if exp and click_timer.reached() and self.appear_then_click(EXP, offset=(30, 50), interval=60):
                 confirm_timer.reset()
                 click_timer.reset()
                 continue
@@ -60,14 +61,15 @@ class Reward(UI):
         logger.info('Reward receive end')
         return True
 
-    def _reward_mission_collect(self, interval=1):
+    def _reward_mission_collect(self, interval=1, skip_first_screenshot=True):
         """
         Streamline handling of mission rewards for
         both 'all' and 'weekly' pages
 
         Args:
-            interval (int): Configure the interval for
-                            assets involved
+            interval (int, float):
+                Configure the interval for assets involved
+            skip_first_screenshot:
 
         Returns:
             bool, if encountered at least 1 GET_ITEMS_*
@@ -86,7 +88,10 @@ class Reward(UI):
 
         reward = False
         while 1:
-            self.device.screenshot()
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
 
             for button in [GET_ITEMS_1, GET_ITEMS_2]:
                 if self.appear_then_click(button, offset=(30, 30), interval=interval):
@@ -98,8 +103,7 @@ class Reward(UI):
             for button in [MISSION_MULTI, MISSION_SINGLE]:
                 if not click_timer.reached():
                     continue
-                if self.appear(button, offset=(0, 200), interval=interval) \
-                        and button.match_appear_on(self.device.image):
+                if self.match_template_color(button, offset=(20, 200), interval=interval):
                     self.device.click(button)
                     exit_timer.reset()
                     click_timer.reset()
@@ -155,8 +159,9 @@ class Reward(UI):
         """
         self.reward_side_navbar_ensure(upper=1)
 
-        if not self.appear(MISSION_MULTI) and \
-                not self.appear(MISSION_SINGLE):
+        if not self.appear(MISSION_MULTI, offset=(20, 200)) and \
+                not self.appear(MISSION_SINGLE, offset=(20, 200)):
+            logger.info('No MISSION_MULTI or MISSION_SINGLE')
             return False
 
         # Uses default interval to account for
@@ -171,7 +176,8 @@ class Reward(UI):
         Returns:
             bool, if handled
         """
-        if not self.appear(MISSION_WEEKLY_RED_DOT):
+        if not self.image_color_count(MISSION_WEEKLY_RED_DOT, color=(206, 81, 66), threshold=221, count=20):
+            logger.info('No MISSION_WEEKLY_RED_DOT')
             return False
 
         self.reward_side_navbar_ensure(upper=5)
@@ -179,7 +185,24 @@ class Reward(UI):
         # Uses no interval to account for
         # behavior differences and avoid
         # premature exit
-        return self._reward_mission_collect(interval=0)
+        return self._reward_mission_collect(interval=0.2)
+
+    def reward_mission_notice(self):
+        """
+        Returns:
+            bool: If notice appear
+
+        Pages:
+            in: page_main
+        """
+        if self.appear(MISSION_NOTICE):
+            logger.info('Found mission notice MISSION_NOTICE')
+            return True
+        if self.image_color_count(MISSION_NOTICE_WHITE, color=(214, 117, 99), threshold=221, count=20):
+            logger.info('Found mission notice MISSION_NOTICE_WHITE')
+            return True
+
+        return False
 
     def reward_mission(self, daily=True, weekly=True):
         """
@@ -199,11 +222,8 @@ class Reward(UI):
         if not daily and not weekly:
             return False
         logger.hr('Mission reward')
-        if not self.appear(MISSION_NOTICE):
-            logger.info('No mission reward')
+        if not self.reward_mission_notice():
             return False
-        else:
-            logger.info('Found mission reward notice')
 
         self.ui_goto(page_mission, skip_first_screenshot=True)
 

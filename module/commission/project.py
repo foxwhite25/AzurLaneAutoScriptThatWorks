@@ -50,6 +50,8 @@ class TwOcr(Ocr):
         """
         # There no letter `艦` in training dataset
         result = result.replace('鑑', '艦').replace('盤', '艦')
+        # 支援土蒙爾島
+        result = result.replace('土蒙爾', '土豪爾')
         return result
 
 
@@ -159,7 +161,7 @@ class Commission:
         # Name
         area = area_offset((176, 23, 420, 53), self.area[0:2])
         button = Button(area=area, color=(), button=area, name='COMMISSION')
-        ocr = Ocr(button, lang='jp')
+        ocr = Ocr(button, letter=(201, 201, 201), lang='jp')
         self.button = button
         self.name = ocr.ocr(self.image)
         self.genre = self.commission_name_parse(self.name)
