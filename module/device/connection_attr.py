@@ -9,6 +9,7 @@ from module.base.decorator import cached_property
 from module.config.config import AzurLaneConfig
 from module.config.env import IS_ON_PHONE_CLOUD
 from module.config.utils import deep_iter
+from module.device.method.utils import get_serial_pair
 from module.exception import RequestHumanTakeover
 from module.logger import logger
 
@@ -74,6 +75,10 @@ class ConnectionAttr:
             res = re.search(r'(127\.\d+\.\d+\.\d+:\d+)', serial)
             if res:
                 serial = res.group(1)
+        # 12127.0.0.1:16384
+        serial = serial.replace('12127.0.0.1', '127.0.0.1')
+        # auto127.0.0.1:16384
+        serial = serial.replace('auto127.0.0.1', '127.0.0.1').replace('autoemulator', 'emulator')
         return str(serial)
 
     def serial_check(self):
@@ -128,10 +133,38 @@ class ConnectionAttr:
         return bool(re.match(r'^wsa', self.serial))
 
     @cached_property
+    def port(self) -> int:
+        port_serial, _ = get_serial_pair(self.serial)
+        if port_serial is None:
+            port_serial = self.serial
+        try:
+            return int(port_serial.split(':')[1])
+        except (IndexError, ValueError):
+            return 0
+
+    @cached_property
+    def is_mumu12_family(self):
+        # 127.0.0.1:16XXX
+        return 16384 <= self.port <= 17408
+
+    @cached_property
     def is_mumu_family(self):
         # 127.0.0.1:7555
         # 127.0.0.1:16384 + 32*n
-        return self.serial == '127.0.0.1:7555' or self.serial.startswith('127.0.0.1:16')
+        return self.serial == '127.0.0.1:7555' or self.is_mumu12_family
+
+    @cached_property
+    def is_ldplayer_bluestacks_family(self):
+        # Note that LDPlayer and BlueStacks have the same serial range
+        return self.serial.startswith('emulator-') or 5555 <= self.port <= 5587
+
+    @cached_property
+    def is_nox_family(self):
+        return 62001 <= self.port <= 63025
+
+    @cached_property
+    def is_vmos(self):
+        return 5667 <= self.port <= 5699
 
     @cached_property
     def is_emulator(self):
@@ -140,6 +173,10 @@ class ConnectionAttr:
     @cached_property
     def is_network_device(self):
         return bool(re.match(r'\d+\.\d+\.\d+\.\d+:\d+', self.serial))
+
+    @cached_property
+    def is_local_network_device(self):
+        return bool(re.match(r'192\.168\.\d+\.\d+:\d+', self.serial))
 
     @cached_property
     def is_over_http(self):
@@ -177,7 +214,8 @@ class ConnectionAttr:
                          rf"SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config") as key:
                 port = QueryValueEx(key, "BstAdbPort")[0]
         except FileNotFoundError:
-            logger.error(rf'Unable to find registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config')
+            logger.error(
+                rf'Unable to find registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests\{folder_name}\Config')
             logger.error('Please confirm that your are using BlueStack 4 hyper-v and not regular BlueStacks 4')
             logger.error(r'Please check if there is any other emulator instances under '
                          r'registry HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_bgp64_hyperv\Guests')

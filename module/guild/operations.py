@@ -157,7 +157,7 @@ class GuildOperations(GuildBase):
 
         list_expand = []
         list_enter = []
-        dots = TEMPLATE_OPERATIONS_RED_DOT.match_multi(self.image_crop(detection_area), threshold=5)
+        dots = TEMPLATE_OPERATIONS_RED_DOT.match_multi(self.image_crop(detection_area, copy=False), threshold=5)
         logger.info(f'Active operations found: {len(dots)}')
         for button in dots:
             button = button.move(vector=detection_area[:2])
@@ -202,7 +202,7 @@ class GuildOperations(GuildBase):
             p1, p2 = random_rectangle_vector(
                 direction_vector, box=detection_area, random_range=(-50, -50, 50, 50), padding=20)
             self.device.drag(p1, p2, segments=2, shake=(0, 25), point_random=(0, 0, 0, 0), shake_random=(0, -5, 0, 5))
-            self.device.sleep(0.3)
+            # self.device.sleep(0.3)
 
         logger.warning('Failed to find active operation dispatch')
         return False
@@ -477,7 +477,9 @@ class GuildOperations(GuildBase):
                 continue
 
             # End
-            if az.is_combat_executing():
+            pause = az.is_combat_executing()
+            if pause:
+                logger.attr('BattleUI', pause)
                 return True
 
     def _guild_operations_boss_combat(self):
