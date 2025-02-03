@@ -248,6 +248,45 @@ DIC_SIREN_NAME_CHI_TO_ENG = {
     # Light-Chasing Sea of Stars
     'sairenboss10': 'Sirenboss10',
     'UDFsairen_baolei_2': 'UDFFortress2',
+
+    # Heart-Linking Harmony
+    'lafei_6': 'Laffey6',
+    'tashigan_idol': 'TashkentIdol',
+    'xiefeierde_idol': 'SheffieldIdol',
+    'yilishabai_3': 'Elizabeth3',
+    'jiasikenie_idol': 'GascogneIdol',
+    'dafeng_idol': 'TaihouIdol',
+
+    # Interlude of Illusions
+    'tianlangxing': 'Sirius',
+    'daiduo': 'Dido',
+    'z23_g': 'Z23_g',
+    'laibixi_g': 'Leipzig_g',
+    'pangpeimagenuo': 'PompeoMagno',
+    'aerfuleiduo': 'AlfredoOriani',
+    'guogan': 'LAudacieux',
+    'dipulaikesi': 'Dupleix',
+
+    # Windborne Steel Wings
+    'qinraozhe_IV': 'Intruder',
+    'tiancheng_m_quzhu': 'AmagiMasked',
+    'tiancheng_m_qingxun': 'AmagiMasked',
+    'tiancheng_m_zhongxun': 'AmagiMasked',
+    'tiancheng_m_zhanlie': 'AmagiMasked',
+    'tiancheng_m_hangmu': 'AmagiMasked',
+
+    # Tempesta and the Sleeping Sea
+    'hemuhao': 'Amity',
+    'pucimaosi': 'Portsmouth',
+    'mali': 'MaryCeleste',
+    'fengfan_haigu03': 'fengfanhaigu03',
+
+    # Dangerous Inventions Incoming
+    'tolove_renxing01': 'ToLoveNana01',
+    'tolove_renxing02': 'ToLoveYui02',
+    'tolove_renxing03': 'ToLoveNana03',
+    'tolove_renxing04': 'ToLoveHaruna04',
+    'tolove_renxing05': 'ToLoveGoldenDarkness05',
 }
 
 
@@ -296,15 +335,15 @@ class MapData:
 
             # portal
             self.portal = []
-            if self.map_id in MAP_EVENT_LIST:
-                for event_id in MAP_EVENT_LIST[self.map_id]['event_list'].values():
-                    event = MAP_EVENT_TEMPLATE[event_id]
-                    for effect in event['effect'].values():
-                        if effect[0] == 'jump':
-                            address = event['address']
-                            address = location2node((address[1], address[0]))
-                            target = location2node((effect[2], effect[1]))
-                            self.portal.append((address, target))
+            # if self.map_id in MAP_EVENT_LIST:
+            #     for event_id in MAP_EVENT_LIST[self.map_id]['event_list'].values():
+            #         event = MAP_EVENT_TEMPLATE[event_id]
+            #         for effect in event['effect'].values():
+            #             if effect[0] == 'jump':
+            #                 address = event['address']
+            #                 address = location2node((address[1], address[0]))
+            #                 target = location2node((effect[2], effect[1]))
+            #                 self.portal.append((address, target))
 
             # land_based
             # land_based = {{6, 7, 1}, ...}
@@ -451,7 +490,7 @@ class MapData:
             lines.append(f'MAP.portal_data = {self.portal}')
         lines.append('MAP.map_data = \"\"\"')
         for y in range(self.shape[1] + 1):
-            lines.append('    ' + ' '.join([self.map_data[(x, y)] for x in range(self.shape[0] + 1)]))
+            lines.append('    ' + ' '.join([self.map_data.get((x, y), '??') for x in range(self.shape[0] + 1)]))
         lines.append('\"\"\"')
         if self.map_data_loop is not None:
             lines.append('MAP.map_data_loop = \"\"\"')
@@ -588,6 +627,10 @@ class ChapterTemplate:
         Returns:
             list(MapData):
         """
+        def is_extra(name):
+            name = name.lower().replace('.', '')
+            return name in ['extra', 'ex']
+
         print('<<< SEARCH MAP >>>')
         name = name.strip()
         name = int(name) if name.isdigit() else name
@@ -595,7 +638,7 @@ class ChapterTemplate:
         if isinstance(name, str):
             maps = []
             for map_id, data in DATA.items():
-                if not isinstance(map_id, int) or data['chapter_name'] == 'EXTRA':
+                if not isinstance(map_id, int) or is_extra(data['chapter_name']):
                     continue
                 if not re.search(name, data['name']):
                     continue
@@ -621,7 +664,7 @@ class ChapterTemplate:
             event_id = get_event_id(maps[0].map_id)
             new = []
             for map_id, data in DATA.items():
-                if not isinstance(map_id, int) or data['chapter_name'] == 'EXTRA':
+                if not isinstance(map_id, int) or is_extra(data['chapter_name']):
                     continue
                 if get_event_id(data['id']) == event_id:
                     data = MapData(data, DATA_LOOP.get(map_id, None))
@@ -678,8 +721,8 @@ ENEMY_FILTER = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
 LOADER = LuaLoader(FILE, server='CN')
 DATA = LOADER.load('./sharecfgdata/chapter_template.lua')
 DATA_LOOP = LOADER.load('./sharecfgdata/chapter_template_loop.lua')
-MAP_EVENT_LIST = LOADER.load('./sharecfg/map_event_list.lua')
-MAP_EVENT_TEMPLATE = LOADER.load('./sharecfg/map_event_template.lua')
+# MAP_EVENT_LIST = LOADER.load('./sharecfg/map_event_list.lua')
+# MAP_EVENT_TEMPLATE = LOADER.load('./sharecfg/map_event_template.lua')
 EXPECTATION_DATA = LOADER.load('./sharecfgdata/expedition_data_template.lua')
 
 ct = ChapterTemplate()

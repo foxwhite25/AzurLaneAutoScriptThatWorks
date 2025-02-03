@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 
 import module.config.server as server
@@ -5,11 +6,11 @@ from module.base.timer import Timer
 from module.combat.combat import BATTLE_PREPARATION
 from module.logger import logger
 from module.meta_reward.meta_reward import MetaReward
-from module.ocr.ocr import DigitCounter, Digit
+from module.ocr.ocr import Digit, DigitCounter
 from module.os_ash.ash import AshCombat
 from module.os_ash.assets import *
 from module.os_handler.map_event import MapEventHandler
-from module.ui.assets import BACK_ARROW, MAIN_GOTO_REWARD
+from module.ui.assets import BACK_ARROW
 from module.ui.page import page_reward
 from module.ui.ui import UI
 
@@ -22,7 +23,10 @@ class MetaState(Enum):
 
 
 OCR_BEACON_TIER = Digit(BEACON_TIER, name='OCR_ASH_TIER')
-OCR_META_DAMAGE = Digit(META_DAMAGE, name='OCR_META_DAMAGE')
+if server.server != 'jp':
+    OCR_META_DAMAGE = Digit(META_DAMAGE, name='OCR_META_DAMAGE')
+else:
+    OCR_META_DAMAGE = Digit(META_DAMAGE, letter=(201, 201, 201), name='OCR_META_DAMAGE')
 
 
 class MetaDigitCounter(DigitCounter):
@@ -33,13 +37,20 @@ class MetaDigitCounter(DigitCounter):
         if result.startswith('00/'):
             result = '100/' + result[3:]
 
+        # 23 -> 2/3
+        if re.match(r'^[0123]3$', result):
+            result = f'{result[0]}/{result[1]}'
+
         return result
 
 
 class Meta(UI, MapEventHandler):
 
     def digit_ocr_point_and_check(self, button: Button, check_number: int):
-        point_ocr = MetaDigitCounter(button, letter=(235, 235, 235), threshold=160, name='POINT_OCR')
+        if server.server != 'jp':
+            point_ocr = MetaDigitCounter(button, letter=(235, 235, 235), threshold=160, name='POINT_OCR')
+        else:
+            point_ocr = MetaDigitCounter(button, letter=(192, 192, 192), threshold=160, name='POINT_OCR')
         point, _, _ = point_ocr.ocr(self.device.image)
         if point >= check_number:
             return True
@@ -67,11 +78,11 @@ class Meta(UI, MapEventHandler):
 
 
 def _server_support():
-    return server.server in ['cn', 'en', 'jp','tw']
+    return server.server in ['cn', 'en', 'jp', 'tw']
 
 
 def _server_support_dossier_auto_attack():
-    return server.server in ['cn']
+    return server.server in ['cn', 'en']
 
 
 class OpsiAshBeacon(Meta):
@@ -170,7 +181,7 @@ class OpsiAshBeacon(Meta):
             if self.handle_map_event():
                 continue
             # Accidentally goto main page
-            if self.appear(MAIN_GOTO_REWARD, offset=(20, 20), interval=2):
+            if self.ui_main_appear_then_click(page_reward, interval=2):
                 continue
             if self.appear(META_ENTRANCE, offset=(20, 300), interval=2):
                 continue
@@ -220,12 +231,10 @@ class OpsiAshBeacon(Meta):
             else:
                 self.device.screenshot()
 
-            if self.appear(META_INNER_PAGE_DAMAGE, offset=(20, 20)) \
-                    and META_INNER_PAGE_DAMAGE.match_appear_on(self.device.image):
+            if self.match_template_color(META_INNER_PAGE_DAMAGE, offset=(20, 20)):
                 logger.info('Already in meta damage page')
                 break
-            if self.appear(META_INNER_PAGE_NOT_DAMAGE, offset=(20, 20)) \
-                    and META_INNER_PAGE_NOT_DAMAGE.match_appear_on(self.device.image):
+            if self.match_template_color(META_INNER_PAGE_NOT_DAMAGE, offset=(20, 20)):
                 logger.info('In meta details page, should switch to damage page')
                 self.appear_then_click(META_INNER_PAGE_NOT_DAMAGE, offset=(20, 20), interval=2)
                 continue
@@ -236,7 +245,7 @@ class OpsiAshBeacon(Meta):
         In beacon:
             ask for help if needed
         In dossier:
-            [cn]: auto attack if needed
+            ['cn', 'en']: auto attack if needed
             others: do nothing this version
         """
         # Page beacon or dossier
@@ -454,7 +463,7 @@ class OpsiAshBeacon(Meta):
                 skip_first_screenshot = False
             else:
                 self.device.screenshot()
-            
+
             if self.appear(DOSSIER_LIST, offset=(20, 20)):
                 logger.info('In dossier page')
                 return True

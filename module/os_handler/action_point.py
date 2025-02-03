@@ -105,6 +105,9 @@ class ActionPointHandler(UI, MapEventHandler):
     def _is_in_action_point(self):
         return self.appear(ACTION_POINT_USE, offset=(20, 20))
 
+    def is_current_ap_visible(self):
+        return self.match_template_color(CURRENT_AP_CHECK, offset=(40, 5), threshold=15)
+
     def action_point_use(self, skip_first_screenshot=True):
         prev = self._action_point_current
         self.interval_clear(ACTION_POINT_USE)
@@ -144,6 +147,20 @@ class ActionPointHandler(UI, MapEventHandler):
         self._action_point_total = total
 
     def action_point_safe_get(self, skip_first_screenshot=True):
+        timeout = Timer(3, count=6).start()
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if self.is_current_ap_visible():
+                break
+            if timeout.reached():
+                logger.warning('Get action points timeout, wait is_current_ap_visible timeout')
+                break
+
+        skip_first_screenshot = True
         timeout = Timer(1, count=2).start()
         while 1:
             if skip_first_screenshot:
@@ -154,10 +171,6 @@ class ActionPointHandler(UI, MapEventHandler):
             if timeout.reached():
                 logger.warning('Get action points timeout')
                 break
-
-            if self.info_bar_count() >= 2:
-                timeout.reset()
-                continue
 
             self.action_point_update()
 
@@ -376,9 +389,17 @@ class ActionPointHandler(UI, MapEventHandler):
             # Buy action points
             if self.config.OpsiGeneral_BuyActionPointLimit > 0 and not buy_checked:
                 if self.action_point_buy(preserve=self.config.OpsiGeneral_OilLimit):
+                    self.action_point_safe_get()
                     continue
                 else:
                     buy_checked = True
+
+            # Recheck if total ap is less than cost
+            # If it is, skip using boxes
+            if self._action_point_total < cost:
+                logger.info('Not having enough action points')
+                self.action_point_quit()
+                raise ActionPointLimit
 
             # Sort action point boxes
             box = []

@@ -1,4 +1,5 @@
 from module.combat.combat import *
+from module.combat.combat import QUIT
 from module.exercise.assets import *
 from module.exercise.equipment import ExerciseEquipment
 from module.exercise.hp_daemon import HpDaemon
@@ -6,16 +7,9 @@ from module.exercise.opponent import OPPONENT, OpponentChoose
 from module.ui.assets import EXERCISE_CHECK
 
 
-class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment):
+class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
     def _in_exercise(self):
         return self.appear(EXERCISE_CHECK, offset=(20, 20))
-
-    def is_combat_executing(self):
-        """
-        Returns:
-            bool:
-        """
-        return self.appear(PAUSE) and np.max(self.image_crop(PAUSE_DOUBLE_CHECK)) < 153
 
     def _combat_preparation(self, skip_first_screenshot=True):
         logger.info('Combat preparation')
@@ -35,7 +29,9 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment):
                 continue
 
             # End
-            if self.appear(PAUSE):
+            pause = self.is_combat_executing()
+            if pause:
+                logger.attr('BattleUI', pause)
                 break
 
     def _combat_execute(self):
@@ -46,16 +42,25 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment):
         logger.info('Combat execute')
         self.device.stuck_record_clear()
         self.device.click_record_clear()
-        self.low_hp_confirm_timer = Timer(self.config.Exercise_LowHpConfirmWait, count=2).start()
+        self.low_hp_confirm_timer = Timer(1.5, count=2).start()
         show_hp_timer = Timer(5)
         pause_interval = Timer(0.5, count=1)
+        # Pause button to identify battle UI theme
+        pause = None
         success = True
         end = False
 
         while 1:
             self.device.screenshot()
 
-            if not self.is_combat_executing():
+            p = self.is_combat_executing()
+            if p:
+                if end:
+                    end = False
+                if pause is None:
+                    pause = p
+            else:
+                self.low_hp_confirm_timer.reset()
                 # Finish - S or D rank
                 if self.appear_then_click(BATTLE_STATUS_S, interval=1):
                     success = True
@@ -82,17 +87,20 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment):
                 continue
 
             # Quit
-            if self.appear_then_click(QUIT_CONFIRM, offset=(20, 20), interval=5):
+            if self.handle_combat_quit():
+                pause_interval.reset()
                 success = False
                 end = True
                 continue
             if self.appear_then_click(QUIT_RECONFIRM, offset=(20, 20), interval=5):
-                self.interval_reset(QUIT_CONFIRM)
+                self.interval_reset(QUIT)
+                pause_interval.reset()
                 continue
             if not end:
-                if self._at_low_hp(image=self.device.image):
+                if p and self._at_low_hp(image=self.device.image, pause=pause):
                     logger.info('Exercise quit')
-                    if pause_interval.reached() and self.appear_then_click(PAUSE):
+                    if pause_interval.reached():
+                        self.device.click(p)
                         pause_interval.reset()
                         continue
                 else:
@@ -174,15 +182,15 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment):
             return False
 
         self._choose_opponent(0)
-        super().equipment_take_off()
+        self.equipment_take_off()
         self._preparation_quit()
 
-    # def equipment_take_on(self):
-    #     if self.config.EXERCISE_FLEET_EQUIPMENT is None:
-    #         return False
-    #     if self.equipment_has_take_on:
-    #         return False
-    #
-    #     self._choose_opponent(0)
-    #     super().equipment_take_on()
-    #     self._preparation_quit()
+    def equipment_take_on(self):
+        if self.config.EXERCISE_FLEET_EQUIPMENT is None:
+            return False
+        if self.equipment_has_take_on:
+            return False
+
+        self._choose_opponent(0)
+        super().equipment_take_on()
+        self._preparation_quit()

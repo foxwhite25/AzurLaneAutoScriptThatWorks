@@ -36,7 +36,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         """
         Pages:
             in: in_map, MAP_OFFENSIVE
-            out: combat_appear
+            out: is_combat_loading
         """
         self.interval_reset(AUTO_SEARCH_MAP_OPTION_ON)
         while 1:
@@ -183,11 +183,13 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
 
             if self.is_auto_search_running():
                 checked_fleet = self.auto_search_watch_fleet(checked_fleet)
-                checked_oil = self.auto_search_watch_oil(checked_oil)
-                checked_coin = self.auto_search_watch_coin(checked_coin)
+                if not checked_oil or not checked_coin:
+                    checked_oil = self.auto_search_watch_oil(checked_oil)
+                    checked_coin = self.auto_search_watch_coin(checked_coin)
             if self.handle_retirement():
                 self.map_offensive_auto_search()
-                continue
+                # Map offensive ends at is_combat_loading
+                break
             if self.handle_auto_search_map_option():
                 continue
             if self.handle_combat_low_emotion():
@@ -202,6 +204,9 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
 
             # End
             if self.is_combat_loading():
+                break
+            if self.is_combat_executing():
+                logger.info('is_combat_executing')
                 break
             if self.is_in_auto_search_menu() or self._handle_auto_search_menu_missing():
                 raise CampaignEnd
@@ -233,7 +238,9 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             # End
             if self.is_in_auto_search_menu() or self._handle_auto_search_menu_missing():
                 raise CampaignEnd
-            if self.is_combat_executing():
+            pause = self.is_combat_executing()
+            if pause:
+                logger.attr('BattleUI', pause)
                 break
 
         logger.info('Auto Search combat execute')

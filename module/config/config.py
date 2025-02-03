@@ -104,17 +104,22 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             logger.info("Using template config, which is read only")
             self.auto_update = False
             self.task = name_to_function("template")
+        self.init_task(task)
+
+    def init_task(self, task=None):
+        if self.is_template_config:
+            return
+
+        self.load()
+        if task is None:
+            # Bind `Alas` by default which includes emulator settings.
+            task = name_to_function("Alas")
         else:
-            self.load()
-            if task is None:
-                # Bind `Alas` by default which includes emulator settings.
-                task = name_to_function("Alas")
-            else:
-                # Bind a specific task for debug purpose.
-                task = name_to_function(task)
-            self.bind(task)
-            self.task = task
-            self.save()
+            # Bind a specific task for debug purpose.
+            task = name_to_function(task)
+        self.bind(task)
+        self.task = task
+        self.save()
 
     def load(self):
         self.data = self.read_file(self.config_name)
@@ -188,6 +193,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         return deep_get(
             self.data, keys="Alas.Optimization.CloseGameDuringWait", default=False
         )
+
+    @property
+    def is_actual_task(self):
+        return self.task.command.lower() not in ['alas', 'template']
 
     def get_next_task(self):
         """
@@ -287,7 +296,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
 
         limit_next_run(["Commission", "Reward"], limit=now + timedelta(hours=12, seconds=-1))
         limit_next_run(["Research"], limit=now + timedelta(hours=24, seconds=-1))
-        limit_next_run(["OpsiExplore", "OpsiCrossMonth", "OpsiVoucher", "OpsiMonthBoss"],
+        limit_next_run(["OpsiExplore", "OpsiCrossMonth", "OpsiVoucher", "OpsiMonthBoss", "OpsiShop"],
                        limit=now + timedelta(days=31, seconds=-1))
         limit_next_run(["OpsiArchive"], limit=now + timedelta(days=7, seconds=-1))
         limit_next_run(self.args.keys(), limit=now + timedelta(hours=24, seconds=-1))
